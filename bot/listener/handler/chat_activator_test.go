@@ -61,16 +61,16 @@ func Test_ChatActivator_Handle(t *testing.T) {
 				"PassExists: pass",
 				"ActivateChat: 123",
 				"DeletePass: pass",
-				"Handle: {message: pass, chat: 123}",
+				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: true}),
 			},
 		},
 		{
-			description: "it should activate chat if it's not active and call next handler",
+			description: "it should do nothing if chat is already active",
 			passStorage: chatActivatorPassStorageMock{passExistsRes: true},
 			chatStorage: chatActivatorChatStorageMock{},
-			given:       &UpdateContext{Update: update, isChatActive: true},
+			given:       &UpdateContext{Update: update, IsChatActive: true},
 			expectedRunLog: []string{
-				"Handle: {message: pass, chat: 123}",
+				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: true}),
 			},
 		},
 		{

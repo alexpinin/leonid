@@ -14,6 +14,6 @@ func (h *InputValidator) Handle(c context.Context, b *bot.Bot, u *UpdateContext)
 	if u == nil || u.Message == nil {
 		return
 	}
-	u.isInputValid = true
+	u.IsInputValid = true
 	h.handleNext(c, b, u)
 }

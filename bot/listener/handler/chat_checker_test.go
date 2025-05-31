@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"errors"
+	"fmt"
 	"leonid/testutil"
 	"testing"
 
@@ -9,79 +9,65 @@ import (
 )
 
 type chatCheckerStorageMock struct {
+	runLog        *[]string
 	chatExistsRes bool
 	chatExistsErr error
 }
 
-func (m *chatCheckerStorageMock) ChatExists(int64) (bool, error) {
+func (m *chatCheckerStorageMock) ChatExists(chatID int64) (bool, error) {
+	*m.runLog = append(*m.runLog, fmt.Sprintf("ChatExists: %d", chatID))
 	return m.chatExistsRes, m.chatExistsErr
 }
 
 func Test_ChatChecker_Handle(t *testing.T) {
+	update := &models.Update{
+		Message: &models.Message{
+			Chat: models.Chat{ID: 123},
+		},
+	}
 	testCases := []struct {
-		description string
-		storage     chatCheckerStorage
-		given       *UpdateContext
-		expected    *UpdateContext
+		description    string
+		storage        chatCheckerStorageMock
+		given          *UpdateContext
+		expectedRunLog []string
 	}{
 		{
 			description: "should set chat as active and call next handler if chat exists",
-			storage: &chatCheckerStorageMock{
-				chatExistsRes: true,
-				chatExistsErr: nil,
-			},
-			given: &UpdateContext{
-				Update: &models.Update{
-					Message: &models.Message{},
-				},
-			},
-			expected: &UpdateContext{
-				Update: &models.Update{
-					Message: &models.Message{},
-				},
-				isChatActive: true,
+			storage:     chatCheckerStorageMock{chatExistsRes: true},
+			given:       &UpdateContext{Update: update},
+			expectedRunLog: []string{
+				"ChatExists: 123",
+				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: true}),
 			},
 		},
 		{
 			description: "should stop and exit if ChatExists returns error",
-			storage: &chatCheckerStorageMock{
-				chatExistsErr: errors.New("test"),
+			storage:     chatCheckerStorageMock{chatExistsErr: testError},
+			given:       &UpdateContext{Update: update},
+			expectedRunLog: []string{
+				"ChatExists: 123",
 			},
-			given: &UpdateContext{
-				Update: &models.Update{
-					Message: &models.Message{},
-				},
-			},
-			expected: nil,
 		},
 		{
 			description: "should set chat as not active and call next handler if chat doesn't exist",
-			storage: &chatCheckerStorageMock{
-				chatExistsRes: false,
-				chatExistsErr: nil,
-			},
-			given: &UpdateContext{
-				Update: &models.Update{
-					Message: &models.Message{},
-				},
-			},
-			expected: &UpdateContext{
-				Update: &models.Update{
-					Message: &models.Message{},
-				},
-				isChatActive: false,
+			storage:     chatCheckerStorageMock{},
+			given:       &UpdateContext{Update: update},
+			expectedRunLog: []string{
+				"ChatExists: 123",
+				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: false}),
 			},
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
-			m := &mockHandler{}
-			h := NewChatChecker(tc.storage)
-			h.SetNext(m)
+			runLog := make([]string, 0)
+			tc.storage.runLog = &runLog
+			h := NewChatChecker(&tc.storage)
+			h.SetNext(&mockHandler{runLog: &runLog})
 
 			h.Handle(nil, nil, tc.given)
 
-			testutil.Equal(t, tc.expected, m.updateContext)
+			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})
 	}
 }

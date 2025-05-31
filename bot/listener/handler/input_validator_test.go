@@ -24,7 +24,7 @@ func Test_InputValidator_Handle(t *testing.T) {
 				Update: &models.Update{
 					Message: &models.Message{},
 				},
-				isInputValid: true,
+				IsInputValid: true,
 			},
 		},
 		{

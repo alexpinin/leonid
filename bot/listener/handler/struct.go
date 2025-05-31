@@ -9,8 +9,8 @@ import (
 
 type UpdateContext struct {
 	*models.Update
-	isInputValid bool
-	isChatActive bool
+	IsInputValid bool
+	IsChatActive bool
 }
 
 type UpdateHandler interface {
