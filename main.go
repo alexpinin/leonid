@@ -48,25 +48,48 @@ var nicknames = []string{
 }
 
 func handler(ctx context.Context, b *bot.Bot, update *models.Update) {
-	//todo check chat id and message date
 	if update == nil || update.Message == nil {
 		return
 	}
-	lower := strings.ToLower(update.Message.Text)
-	contains := false
-	for _, nickname := range nicknames {
-		if strings.Contains(lower, nickname) {
-			lower = strings.ReplaceAll(lower, nickname, "")
-			contains = true
-		}
-	}
-	if !contains {
+
+	chatID := update.Message.Chat.ID
+	validChat, err := isValidChat(chatID)
+	if err != nil {
 		return
 	}
-	println(lower)
+
+	message := strings.ToLower(update.Message.Text)
+	if !validChat {
+		validPass, err := isPassPhrase(message)
+		if err != nil {
+			return
+		}
+		if validPass {
+			err = connectPassPhraseToChat(message, chatID)
+			if err != nil {
+				return
+			}
+		} else {
+			return
+		}
+	}
+	if !isMessageToAnswer(message) && !isMessageResponse(message) {
+		return
+	}
+
+	message = removeNickname(message)
+
+	handle(ctx, b, message, chatID)
+}
+
+func isMessageResponse(message string) bool {
+	return true
+}
+
+func handle(ctx context.Context, b *bot.Bot, message string, chatID int64) {
 	llmRequest := fmt.Sprintf(`Ты не очень образованный и обидчивый человек.
 		Очень кратко ответь на вопрос, обращаясь к собеседнику "братишка".
-		Вопрос: "%s"`, lower)
+		Вопрос: "%s"`, message)
 
 	// todo add quota
 	// todo return error
@@ -91,7 +114,45 @@ func handler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	}
 
 	b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: update.Message.Chat.ID,
+		ChatID: chatID,
 		Text:   resp.Choices[0].Message.Content.Text,
 	})
+}
+
+func isMessageToAnswer(s string) bool {
+	for _, nickname := range nicknames {
+		if strings.Contains(s, nickname) {
+			return true
+		}
+	}
+	return false
+}
+
+func isValidChat(chatID int64) (bool, error) {
+	return true, nil
+}
+
+func isPassPhrase(s string) (bool, error) {
+	return true, nil
+}
+
+func connectPassPhraseToChat(passPhrase string, chatID int64) error {
+	return nil
+}
+
+func removePassPhrase(s string) error {
+	return nil
+}
+
+func activateChat(chatID int64) error {
+	return nil
+}
+
+func removeNickname(s string) string {
+	for _, nickname := range nicknames {
+		if strings.Contains(s, nickname) {
+			s = strings.ReplaceAll(s, nickname, "")
+		}
+	}
+	return s
 }

@@ -26,3 +26,4 @@ go.work.sum
 
 .git
 .idea
+db/leonid.sqlite3

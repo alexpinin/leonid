@@ -29,5 +29,5 @@ func (h *ChatChecker) Handle(c context.Context, b *bot.Bot, u *UpdateContext) {
 	if exists {
 		u.IsChatActive = true
 	}
-	h.handleNext(c, b, u)
+	h.nextHandle(c, b, u)
 }

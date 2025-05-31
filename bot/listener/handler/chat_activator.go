@@ -31,7 +31,7 @@ type chatActivatorChatStorage interface {
 
 func (h *ChatActivator) Handle(c context.Context, b *bot.Bot, u *UpdateContext) {
 	if u.IsChatActive {
-		h.handleNext(c, b, u)
+		h.nextHandle(c, b, u)
 		return
 	}
 
@@ -53,5 +53,5 @@ func (h *ChatActivator) Handle(c context.Context, b *bot.Bot, u *UpdateContext) 
 	}
 	u.IsChatActive = true
 
-	h.handleNext(c, b, u)
+	h.nextHandle(c, b, u)
 }

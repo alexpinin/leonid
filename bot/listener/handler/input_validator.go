@@ -15,5 +15,5 @@ func (h *InputValidator) Handle(c context.Context, b *bot.Bot, u *UpdateContext)
 		return
 	}
 	u.IsInputValid = true
-	h.handleNext(c, b, u)
+	h.nextHandle(c, b, u)
 }

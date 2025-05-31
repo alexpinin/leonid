@@ -14,7 +14,7 @@ func (h *basicHandler) SetNext(n UpdateHandler) {
 	h.next = n
 }
 
-func (h *basicHandler) handleNext(c context.Context, b *bot.Bot, u *UpdateContext) {
+func (h *basicHandler) nextHandle(c context.Context, b *bot.Bot, u *UpdateContext) {
 	if h.next == nil {
 		return
 	}
