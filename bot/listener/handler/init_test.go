@@ -10,16 +10,11 @@ import (
 )
 
 type mockHandler struct {
-	updateContext *UpdateContext
-	runLog        *[]string
+	runLog *[]string
 }
 
 func (m *mockHandler) Handle(_ context.Context, _ *bot.Bot, uc *UpdateContext) {
-	if m.runLog != nil {
-		*m.runLog = append(*m.runLog, fmt.Sprintf("Handle: %s", testUpdateToStr(uc)))
-	}
-
-	m.updateContext = uc
+	*m.runLog = append(*m.runLog, fmt.Sprintf("Handle: %s", testUpdateToStr(uc)))
 }
 
 func (m *mockHandler) SetNext(UpdateHandler) {

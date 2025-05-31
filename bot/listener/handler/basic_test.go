@@ -6,25 +6,18 @@ import (
 )
 
 func Test_basicHandler_handleNext(t *testing.T) {
-
 	t.Run("should call next handler if it's not nil", func(t *testing.T) {
-		m := &mockHandler{}
+		runLog := make([]string, 0)
 		h := &basicHandler{}
-		h.SetNext(m)
+		h.SetNext(&mockHandler{runLog: &runLog})
 
 		h.handleNext(nil, nil, &UpdateContext{})
 
-		testutil.Equal(t, &UpdateContext{}, m.updateContext)
+		expectedRunLog := []string{"Handle: " + testUpdateToStr(&UpdateContext{})}
+		testutil.Equal(t, expectedRunLog, runLog)
 	})
-
-	//t.Run("should not call next handler if it's nil", func(t *testing.T) {
-	//	m := &mockHandler{}
-	//	h := &basicHandler{}
-	//	h.SetNext(nil)
-	//
-	//	h.handleNext(nil, nil, &UpdateContext{})
-	//
-	//	testutil.Equal(t, *UpdateContext(nil), m.UpdateContext)
-	//})
-
+	t.Run("should not call next and fail if it's nil", func(t *testing.T) {
+		h := &basicHandler{}
+		h.handleNext(nil, nil, &UpdateContext{})
+	})
 }
