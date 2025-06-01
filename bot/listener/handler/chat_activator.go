@@ -51,7 +51,7 @@ func (h *ChatActivator) Handle(c context.Context, b *bot.Bot, u *UpdateContext) 
 	if err != nil {
 		return
 	}
-	u.IsChatActive = true
+	u.IsPassActive = true
 
 	h.nextHandle(c, b, u)
 }

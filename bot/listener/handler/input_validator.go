@@ -10,6 +10,10 @@ type InputValidator struct {
 	basicHandler
 }
 
+func NewInputValidator() InputValidator {
+	return InputValidator{}
+}
+
 func (h *InputValidator) Handle(c context.Context, b *bot.Bot, u *UpdateContext) {
 	if u == nil || u.Message == nil {
 		return

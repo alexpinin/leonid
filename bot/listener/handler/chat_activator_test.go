@@ -61,7 +61,7 @@ func Test_ChatActivator_Handle(t *testing.T) {
 				"PassExists: pass",
 				"ActivateChat: 123",
 				"DeletePass: pass",
-				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: true}),
+				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsPassActive: true}),
 			},
 		},
 		{
