@@ -5,6 +5,7 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	handler2 "leonid/src/internal/bot/listener/handler"
+	"leonid/src/internal/bot/service"
 )
 
 type Handler struct {
@@ -23,7 +24,8 @@ func NewHandler() Handler {
 	authGuard := handler2.NewAuthGuard()
 	authGuard.SetNext(&quotaGuard)
 
-	chatActivator := handler2.NewChatActivator(nil, nil)
+	activator := service.NewChatActivator()
+	chatActivator := handler2.NewChatActivator(&activator)
 	chatActivator.SetNext(&authGuard)
 
 	chatChecker := handler2.NewChatChecker(nil)

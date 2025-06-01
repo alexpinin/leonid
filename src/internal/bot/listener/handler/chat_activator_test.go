@@ -1,39 +1,21 @@
 package handler
 
 import (
+	"context"
 	"fmt"
+	"github.com/go-telegram/bot/models"
 	"leonid/testutil"
 	"testing"
-	"time"
-
-	"github.com/go-telegram/bot/models"
 )
 
-type chatActivatorPassStorageMock struct {
-	runLog        *[]string
-	passExistsRes bool
-	passExistsErr error
-	deletePassErr error
+type chatActivatorMock struct {
+	runLog *[]string
+	err    error
 }
 
-func (m *chatActivatorPassStorageMock) PassExists(pass string, _ time.Time) (bool, error) {
-	*m.runLog = append(*m.runLog, fmt.Sprintf("PassExists: %s", pass))
-	return m.passExistsRes, m.passExistsErr
-}
-
-func (m *chatActivatorPassStorageMock) DeletePass(pass string) error {
-	*m.runLog = append(*m.runLog, fmt.Sprintf("DeletePass: %s", pass))
-	return m.deletePassErr
-}
-
-type chatActivatorChatStorageMock struct {
-	runLog          *[]string
-	activateChatErr error
-}
-
-func (m *chatActivatorChatStorageMock) ActivateChat(chatID int64) error {
-	*m.runLog = append(*m.runLog, fmt.Sprintf("ActivateChat: %d", chatID))
-	return m.activateChatErr
+func (m *chatActivatorMock) Activate(_ context.Context, pass string, chatID int64) error {
+	*m.runLog = append(*m.runLog, fmt.Sprintf("Activate: %s, %d", pass, chatID))
+	return m.err
 }
 
 func Test_ChatActivator_Handle(t *testing.T) {
@@ -47,78 +29,42 @@ func Test_ChatActivator_Handle(t *testing.T) {
 	}
 	testCases := []struct {
 		description    string
-		passStorage    chatActivatorPassStorageMock
-		chatStorage    chatActivatorChatStorageMock
+		chatActivator  chatActivatorMock
 		given          *UpdateContext
 		expectedRunLog []string
 	}{
 		{
-			description: "it should activate chat if it's not active and call next handler",
-			passStorage: chatActivatorPassStorageMock{passExistsRes: true},
-			chatStorage: chatActivatorChatStorageMock{},
-			given:       &UpdateContext{Update: update},
+			description:   "it should activate chat if it's not active and call next handler",
+			chatActivator: chatActivatorMock{},
+			given:         &UpdateContext{Update: update},
 			expectedRunLog: []string{
-				"PassExists: pass",
-				"ActivateChat: 123",
-				"DeletePass: pass",
+				"Activate: pass, 123",
 				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsPassActive: true}),
 			},
 		},
 		{
-			description: "it should do nothing if chat is already active",
-			passStorage: chatActivatorPassStorageMock{passExistsRes: true},
-			chatStorage: chatActivatorChatStorageMock{},
-			given:       &UpdateContext{Update: update, IsChatActive: true},
+			description:   "it should do nothing if chat is already active",
+			chatActivator: chatActivatorMock{},
+			given:         &UpdateContext{Update: update, IsChatActive: true},
 			expectedRunLog: []string{
 				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: true}),
 			},
 		},
 		{
-			description: "it should exit and change nothing if PassExists returns error",
-			passStorage: chatActivatorPassStorageMock{passExistsErr: testError},
-			chatStorage: chatActivatorChatStorageMock{},
-			given:       &UpdateContext{Update: update},
+			description:   "it should mark chat as not active if Activate returns error",
+			chatActivator: chatActivatorMock{err: testError},
+			given:         &UpdateContext{Update: update},
 			expectedRunLog: []string{
-				"PassExists: pass",
-			},
-		},
-		{
-			description: "it should exit and change nothing if pass doesn't exist",
-			passStorage: chatActivatorPassStorageMock{},
-			chatStorage: chatActivatorChatStorageMock{},
-			given:       &UpdateContext{Update: update},
-			expectedRunLog: []string{
-				"PassExists: pass",
-			},
-		},
-		{
-			description: "it should exit and change nothing if ActivateChat returns error",
-			passStorage: chatActivatorPassStorageMock{passExistsRes: true},
-			chatStorage: chatActivatorChatStorageMock{activateChatErr: testError},
-			given:       &UpdateContext{Update: update},
-			expectedRunLog: []string{
-				"PassExists: pass",
-				"ActivateChat: 123",
-			},
-		},
-		{
-			description: "it should exit and change nothing if DeletePass returns error",
-			passStorage: chatActivatorPassStorageMock{passExistsRes: true, deletePassErr: testError},
-			chatStorage: chatActivatorChatStorageMock{},
-			given:       &UpdateContext{Update: update},
-			expectedRunLog: []string{
-				"PassExists: pass",
-				"ActivateChat: 123",
-				"DeletePass: pass",
+				"Activate: pass, 123",
+				"Handle: " + testUpdateToStr(&UpdateContext{Update: update}),
 			},
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			runLog := make([]string, 0)
-			tc.passStorage.runLog = &runLog
-			tc.chatStorage.runLog = &runLog
-			h := NewChatActivator(&tc.passStorage, &tc.chatStorage)
+			tc.chatActivator.runLog = &runLog
+			h := NewChatActivator(&tc.chatActivator)
 			h.SetNext(&mockHandler{runLog: &runLog})
 
 			h.Handle(nil, nil, tc.given)

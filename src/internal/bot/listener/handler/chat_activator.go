@@ -2,56 +2,35 @@ package handler
 
 import (
 	"context"
-	"time"
-
 	"github.com/go-telegram/bot"
 )
 
 type ChatActivator struct {
 	basicHandler
-	passStorage chatActivatorPassStorage
-	chatStorage chatActivatorChatStorage
+	activatorService chatActivator
 }
 
-func NewChatActivator(ps chatActivatorPassStorage, cs chatActivatorChatStorage) ChatActivator {
+func NewChatActivator(ca chatActivator) ChatActivator {
 	return ChatActivator{
-		passStorage: ps,
-		chatStorage: cs,
+		activatorService: ca,
 	}
 }
 
-type chatActivatorPassStorage interface {
-	PassExists(pass string, byDate time.Time) (bool, error)
-	DeletePass(pass string) error
+type chatActivator interface {
+	Activate(context.Context, string, int64) error
 }
 
-type chatActivatorChatStorage interface {
-	ActivateChat(chatID int64) error
-}
-
-func (h *ChatActivator) Handle(c context.Context, b *bot.Bot, u *UpdateContext) {
+func (h *ChatActivator) Handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
 	if u.IsChatActive {
-		h.nextHandle(c, b, u)
+		h.nextHandle(ctx, b, u)
 		return
 	}
-
-	ok, err := h.passStorage.PassExists(u.Message.Text, time.Now())
+	err := h.activatorService.Activate(ctx, u.Message.Text, u.Message.Chat.ID)
 	if err != nil {
-		return
+		u.IsPassActive = false
+		// todo log
+	} else {
+		u.IsPassActive = true
 	}
-	if !ok {
-		return
-	}
-
-	err = h.chatStorage.ActivateChat(u.Message.Chat.ID)
-	if err != nil {
-		return
-	}
-	err = h.passStorage.DeletePass(u.Message.Text)
-	if err != nil {
-		return
-	}
-	u.IsPassActive = true
-
-	h.nextHandle(c, b, u)
+	h.nextHandle(ctx, b, u)
 }
