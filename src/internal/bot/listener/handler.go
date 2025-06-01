@@ -4,32 +4,32 @@ import (
 	"context"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
-	"leonid/bot/listener/handler"
+	handler2 "leonid/src/internal/bot/listener/handler"
 )
 
 type Handler struct {
-	handlerHead handler.UpdateHandler
+	handlerHead handler2.UpdateHandler
 }
 
 func NewHandler() Handler {
-	messageCleaner := handler.NewMessageCleaner()
+	messageCleaner := handler2.NewMessageCleaner()
 
-	nicknameChecker := handler.NewNicknameChecker()
+	nicknameChecker := handler2.NewNicknameChecker()
 	nicknameChecker.SetNext(&messageCleaner)
 
-	quotaGuard := handler.NewQuotaGuard(nil)
+	quotaGuard := handler2.NewQuotaGuard(nil)
 	quotaGuard.SetNext(&nicknameChecker)
 
-	authGuard := handler.NewAuthGuard()
+	authGuard := handler2.NewAuthGuard()
 	authGuard.SetNext(&quotaGuard)
 
-	chatActivator := handler.NewChatActivator(nil, nil)
+	chatActivator := handler2.NewChatActivator(nil, nil)
 	chatActivator.SetNext(&authGuard)
 
-	chatChecker := handler.NewChatChecker(nil)
+	chatChecker := handler2.NewChatChecker(nil)
 	chatChecker.SetNext(&chatActivator)
 
-	inputValidator := handler.NewInputValidator()
+	inputValidator := handler2.NewInputValidator()
 	inputValidator.SetNext(&chatChecker)
 
 	return Handler{
@@ -38,6 +38,6 @@ func NewHandler() Handler {
 }
 
 func (h *Handler) Handle(ctx context.Context, b *bot.Bot, update *models.Update) {
-	uc := handler.UpdateContext{Update: update}
+	uc := handler2.UpdateContext{Update: update}
 	h.handlerHead.Handle(ctx, b, &uc)
 }
