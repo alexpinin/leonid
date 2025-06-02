@@ -10,8 +10,8 @@ type QuotaGuard struct {
 	quota quotaManager
 }
 
-func NewQuotaGuard(q quotaManager) QuotaGuard {
-	return QuotaGuard{
+func NewQuotaGuard(q quotaManager) *QuotaGuard {
+	return &QuotaGuard{
 		quota: q,
 	}
 }

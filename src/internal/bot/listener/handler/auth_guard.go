@@ -9,8 +9,8 @@ type AuthGuard struct {
 	basicHandler
 }
 
-func NewAuthGuard() AuthGuard {
-	return AuthGuard{}
+func NewAuthGuard() *AuthGuard {
+	return &AuthGuard{}
 }
 
 func (h *AuthGuard) Handle(c context.Context, b *bot.Bot, u *UpdateContext) {

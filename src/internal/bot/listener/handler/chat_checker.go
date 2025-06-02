@@ -11,23 +11,23 @@ type ChatChecker struct {
 	storage chatCheckerStorage
 }
 
-func NewChatChecker(s chatCheckerStorage) ChatChecker {
-	return ChatChecker{
+func NewChatChecker(s chatCheckerStorage) *ChatChecker {
+	return &ChatChecker{
 		storage: s,
 	}
 }
 
 type chatCheckerStorage interface {
-	ChatExists(chatID int64) (bool, error)
+	ChatExists(ctx context.Context, chatID int64) (bool, error)
 }
 
-func (h *ChatChecker) Handle(c context.Context, b *bot.Bot, u *UpdateContext) {
-	exists, err := h.storage.ChatExists(u.Message.Chat.ID)
+func (h *ChatChecker) Handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
+	exists, err := h.storage.ChatExists(ctx, u.Message.Chat.ID)
 	if err != nil {
 		return
 	}
 	if exists {
 		u.IsChatActive = true
 	}
-	h.nextHandle(c, b, u)
+	h.nextHandle(ctx, b, u)
 }

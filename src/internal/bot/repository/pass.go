@@ -25,8 +25,8 @@ type PassRepository struct {
 	db *db.DB
 }
 
-func NewPassRepository(db *db.DB) PassRepository {
-	return PassRepository{
+func NewPassRepository(db *db.DB) *PassRepository {
+	return &PassRepository{
 		db: db,
 	}
 }

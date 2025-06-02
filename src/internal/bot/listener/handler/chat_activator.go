@@ -10,8 +10,8 @@ type ChatActivator struct {
 	activatorService chatActivator
 }
 
-func NewChatActivator(ca chatActivator) ChatActivator {
-	return ChatActivator{
+func NewChatActivator(ca chatActivator) *ChatActivator {
+	return &ChatActivator{
 		activatorService: ca,
 	}
 }

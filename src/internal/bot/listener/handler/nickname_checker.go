@@ -10,8 +10,8 @@ type NicknameChecker struct {
 	basicHandler
 }
 
-func NewNicknameChecker() NicknameChecker {
-	return NicknameChecker{}
+func NewNicknameChecker() *NicknameChecker {
+	return &NicknameChecker{}
 }
 
 func (h *NicknameChecker) Handle(c context.Context, b *bot.Bot, u *UpdateContext) {

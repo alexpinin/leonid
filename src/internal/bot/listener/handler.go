@@ -4,42 +4,49 @@ import (
 	"context"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
-	handler2 "leonid/src/internal/bot/listener/handler"
+	"leonid/src/internal/bot/listener/handler"
+	"leonid/src/internal/bot/repository"
 	"leonid/src/internal/bot/service"
+	"leonid/src/internal/db"
 )
 
 type Handler struct {
-	handlerHead handler2.UpdateHandler
+	handlerHead handler.UpdateHandler
 }
 
-func NewHandler() Handler {
-	messageCleaner := handler2.NewMessageCleaner()
+func NewHandler() *Handler {
+	messageCleaner := handler.NewMessageCleaner()
 
-	nicknameChecker := handler2.NewNicknameChecker()
-	nicknameChecker.SetNext(&messageCleaner)
+	nicknameChecker := handler.NewNicknameChecker()
+	nicknameChecker.SetNext(messageCleaner)
 
-	quotaGuard := handler2.NewQuotaGuard(nil)
-	quotaGuard.SetNext(&nicknameChecker)
+	quotaService := service.NewQuotaService()
+	quotaGuard := handler.NewQuotaGuard(quotaService)
+	quotaGuard.SetNext(nicknameChecker)
 
-	authGuard := handler2.NewAuthGuard()
-	authGuard.SetNext(&quotaGuard)
+	authGuard := handler.NewAuthGuard()
+	authGuard.SetNext(quotaGuard)
 
-	activator := service.NewChatActivator()
-	chatActivator := handler2.NewChatActivator(&activator)
-	chatActivator.SetNext(&authGuard)
+	database := db.NewDB()
+	passRepo := repository.NewPassRepository(database)
+	chatRepo := repository.NewChatRepository(database)
+	chatService := service.NewChatService(database, passRepo, chatRepo)
 
-	chatChecker := handler2.NewChatChecker(nil)
-	chatChecker.SetNext(&chatActivator)
+	chatActivator := handler.NewChatActivator(chatService)
+	chatActivator.SetNext(authGuard)
 
-	inputValidator := handler2.NewInputValidator()
-	inputValidator.SetNext(&chatChecker)
+	chatChecker := handler.NewChatChecker(chatService)
+	chatChecker.SetNext(chatActivator)
 
-	return Handler{
-		handlerHead: &inputValidator,
+	inputValidator := handler.NewInputValidator()
+	inputValidator.SetNext(chatChecker)
+
+	return &Handler{
+		handlerHead: inputValidator,
 	}
 }
 
 func (h *Handler) Handle(ctx context.Context, b *bot.Bot, update *models.Update) {
-	uc := handler2.UpdateContext{Update: update}
+	uc := handler.UpdateContext{Update: update}
 	h.handlerHead.Handle(ctx, b, &uc)
 }

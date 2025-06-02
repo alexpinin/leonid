@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"leonid/testutil"
 	"testing"
@@ -14,7 +15,7 @@ type chatCheckerStorageMock struct {
 	chatExistsErr error
 }
 
-func (m *chatCheckerStorageMock) ChatExists(chatID int64) (bool, error) {
+func (m *chatCheckerStorageMock) ChatExists(_ context.Context, chatID int64) (bool, error) {
 	*m.runLog = append(*m.runLog, fmt.Sprintf("ChatExists: %d", chatID))
 	return m.chatExistsRes, m.chatExistsErr
 }

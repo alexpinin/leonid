@@ -10,8 +10,8 @@ type MessageCleaner struct {
 	basicHandler
 }
 
-func NewMessageCleaner() MessageCleaner {
-	return MessageCleaner{}
+func NewMessageCleaner() *MessageCleaner {
+	return &MessageCleaner{}
 }
 
 var nicknames = []string{
