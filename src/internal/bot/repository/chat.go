@@ -10,12 +10,12 @@ import (
 const (
 	upsertChatQuery = `
 	INSERT INTO chat (id) VALUES ($1)
-	ON CONFLICT DO NOTHING;
+	ON CONFLICT DO NOTHING
 `
 	chatExistsQuery = `
 	SELECT COUNT(*) > 0
 	FROM chat
-	WHERE id = $1;
+	WHERE id = $1
 `
 )
 
@@ -39,7 +39,7 @@ func (r *ChatRepository) UpsertChat(ctx context.Context, tx *sql.Tx, chatID int6
 
 func (r *ChatRepository) ChatExists(ctx context.Context, tx *sql.Tx, chatID int64) (bool, error) {
 	res := false
-	row := r.db.QueryRowTx(ctx, tx, upsertChatQuery, chatID)
+	row := r.db.QueryRowTx(ctx, tx, chatExistsQuery, chatID)
 	err := row.Scan(&res)
 	if err != nil {
 		return false, fmt.Errorf("ChatRepository.ChatExists: %w", err)

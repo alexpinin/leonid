@@ -18,7 +18,7 @@ func NewHandler() *Handler {
 	messageSender := handler.NewMessageSender()
 
 	messageCleaner := handler.NewMessageCleaner()
-	messageSender.SetNext(messageSender)
+	messageCleaner.SetNext(messageSender)
 
 	nicknameChecker := handler.NewNicknameChecker()
 	nicknameChecker.SetNext(messageCleaner)

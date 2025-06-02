@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"database/sql"
+
+	_ "modernc.org/sqlite"
 )
 
 type DB struct {
@@ -23,7 +25,7 @@ func NewDB() *DB {
 		panic("DB_FILE environment variable not set")
 	}
 	var err error
-	db, err := sql.Open("sqlite3", dbFile)
+	db, err := sql.Open("sqlite", dbFile)
 	if err != nil {
 		panic(err)
 	}

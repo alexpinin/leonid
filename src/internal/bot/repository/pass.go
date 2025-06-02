@@ -16,7 +16,7 @@ const (
 	  AND valid_by >= $2
 `
 	passDeleteQuery = `
-	DELECT FROM pass 
+	DELETE FROM pass 
 	WHERE pass = $1
 `
 )
