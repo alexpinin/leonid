@@ -29,18 +29,20 @@ func NewChatService(
 
 func (s *ChatService) Activate(ctx context.Context, pass string, chatID int64) error {
 	err := s.db.ExecInTx(ctx, func(tx *sql.Tx) error {
-		exists, err := s.passRepo.PassExists(ctx, tx, pass, time.Now())
+		p, err := s.passRepo.FindPass(ctx, tx, pass, time.Now())
 		if err != nil {
 			return err
-		}
-		if !exists {
-			return errUnknownPass
 		}
 		err = s.passRepo.DeletePass(ctx, tx, pass)
 		if err != nil {
 			return err
 		}
-		err = s.chatRepo.UpsertChat(ctx, tx, chatID)
+		chat := repository.Chat{
+			ID:           chatID,
+			Nicknames:    p.Nicknames,
+			SystemPrompt: p.SystemPrompt,
+		}
+		err = s.chatRepo.UpsertChat(ctx, tx, chat)
 		if err != nil {
 			return err
 		}

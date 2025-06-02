@@ -5,12 +5,16 @@ import (
 	"database/sql"
 	"fmt"
 	"leonid/src/internal/db"
+	"strings"
 )
 
 const (
 	upsertChatQuery = `
-	INSERT INTO chat (id) VALUES ($1)
-	ON CONFLICT DO NOTHING
+	INSERT INTO chat (id, nicknames, system_prompt) 
+	VALUES ($1, $2, $3)
+	ON CONFLICT DO UPDATE
+	SET nicknames = $2, 
+	    system_prompt = $3
 `
 	chatExistsQuery = `
 	SELECT COUNT(*) > 0
@@ -29,8 +33,9 @@ func NewChatRepository(db *db.DB) *ChatRepository {
 	}
 }
 
-func (r *ChatRepository) UpsertChat(ctx context.Context, tx *sql.Tx, chatID int64) error {
-	_, err := r.db.ExecTx(ctx, tx, upsertChatQuery, chatID)
+func (r *ChatRepository) UpsertChat(ctx context.Context, tx *sql.Tx, chat Chat) error {
+	nicknames := strings.Join(chat.Nicknames, ",")
+	_, err := r.db.ExecTx(ctx, tx, upsertChatQuery, chat.ID, nicknames, chat.SystemPrompt)
 	if err != nil {
 		return fmt.Errorf("ChatRepository.UpsertChat: %w", err)
 	}
@@ -45,4 +50,10 @@ func (r *ChatRepository) ChatExists(ctx context.Context, tx *sql.Tx, chatID int6
 		return false, fmt.Errorf("ChatRepository.ChatExists: %w", err)
 	}
 	return res, nil
+}
+
+type Chat struct {
+	ID           int64
+	Nicknames    []string
+	SystemPrompt string
 }
