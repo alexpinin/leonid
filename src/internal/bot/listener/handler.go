@@ -15,7 +15,10 @@ type Handler struct {
 }
 
 func NewHandler() *Handler {
+	messageSender := handler.NewMessageSender()
+
 	messageCleaner := handler.NewMessageCleaner()
+	messageSender.SetNext(messageSender)
 
 	nicknameChecker := handler.NewNicknameChecker()
 	nicknameChecker.SetNext(messageCleaner)

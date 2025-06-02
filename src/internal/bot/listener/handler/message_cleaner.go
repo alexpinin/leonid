@@ -26,7 +26,7 @@ func (h MessageCleaner) Handle(c context.Context, b *bot.Bot, u *UpdateContext) 
 	message := strings.TrimSpace(strings.ToLower(u.Message.Text))
 	for _, nickname := range nicknames {
 		if strings.Contains(message, nickname) {
-			message = strings.ReplaceAll(message, nickname, "")
+			u.Message.Text = strings.ReplaceAll(message, nickname, "")
 		}
 	}
 	h.nextHandle(c, b, u)
