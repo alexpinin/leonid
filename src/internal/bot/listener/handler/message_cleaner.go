@@ -22,7 +22,7 @@ var nicknames = []string{
 	"леонид",
 }
 
-func (h MessageCleaner) Handle(c context.Context, b *bot.Bot, u *UpdateContext) {
+func (h *MessageCleaner) Handle(c context.Context, b *bot.Bot, u *UpdateContext) {
 	message := strings.TrimSpace(strings.ToLower(u.Message.Text))
 	for _, nickname := range nicknames {
 		if strings.Contains(message, nickname) {

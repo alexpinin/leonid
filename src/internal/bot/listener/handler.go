@@ -15,25 +15,25 @@ type Handler struct {
 }
 
 func NewHandler() *Handler {
+	database := db.NewDB()
+	passRepo := repository.NewPassRepository(database)
+	chatRepo := repository.NewChatRepository(database)
+	chatService := service.NewChatService(database, passRepo, chatRepo)
+	quotaService := service.NewQuotaService()
+
 	messageSender := handler.NewMessageSender()
 
 	messageCleaner := handler.NewMessageCleaner()
 	messageCleaner.SetNext(messageSender)
 
-	nicknameChecker := handler.NewNicknameChecker()
-	nicknameChecker.SetNext(messageCleaner)
-
-	quotaService := service.NewQuotaService()
 	quotaGuard := handler.NewQuotaGuard(quotaService)
-	quotaGuard.SetNext(nicknameChecker)
+	quotaGuard.SetNext(messageCleaner)
+
+	callGuard := handler.NewCallGuard()
+	callGuard.SetNext(quotaGuard)
 
 	authGuard := handler.NewAuthGuard()
-	authGuard.SetNext(quotaGuard)
-
-	database := db.NewDB()
-	passRepo := repository.NewPassRepository(database)
-	chatRepo := repository.NewChatRepository(database)
-	chatService := service.NewChatService(database, passRepo, chatRepo)
+	authGuard.SetNext(callGuard)
 
 	chatActivator := handler.NewChatActivator(chatService)
 	chatActivator.SetNext(authGuard)
@@ -41,11 +41,11 @@ func NewHandler() *Handler {
 	chatChecker := handler.NewChatChecker(chatService)
 	chatChecker.SetNext(chatActivator)
 
-	inputValidator := handler.NewInputValidator()
-	inputValidator.SetNext(chatChecker)
+	inputGuard := handler.NewInputGuard()
+	inputGuard.SetNext(chatChecker)
 
 	return &Handler{
-		handlerHead: inputValidator,
+		handlerHead: inputGuard,
 	}
 }
 
