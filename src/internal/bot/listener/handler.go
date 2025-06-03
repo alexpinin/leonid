@@ -20,6 +20,7 @@ func NewHandler() *Handler {
 	configRepo := repository.NewConfigRepository(database)
 	configService := service.NewConfigService(database, configRepo)
 	quotaService := service.NewQuotaService()
+	messageService := service.NewMessageService(configRepo)
 
 	inputGuard := handler.NewInputGuard()
 	chatChecker := handler.NewChatChecker(configService)
@@ -28,7 +29,7 @@ func NewHandler() *Handler {
 	callGuard := handler.NewCallGuard(configService)
 	quotaGuard := handler.NewQuotaGuard(quotaService)
 	messageCleaner := handler.NewMessageCleaner(configService)
-	messageSender := handler.NewMessageSender(configService)
+	messageSender := handler.NewMessageSender(messageService)
 
 	inputGuard.SetNext(chatChecker)
 	chatChecker.SetNext(chatActivator)

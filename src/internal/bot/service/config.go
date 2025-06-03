@@ -18,11 +18,11 @@ type ConfigService struct {
 
 func NewConfigService(
 	db *db.DB,
-	configRepo *repository.ConfigRepository,
+	cr *repository.ConfigRepository,
 ) *ConfigService {
 	return &ConfigService{
 		db:         db,
-		configRepo: configRepo,
+		configRepo: cr,
 	}
 }
 
