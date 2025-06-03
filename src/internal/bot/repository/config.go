@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"leonid/src/internal/db"
+	"leonid/src/internal/common/db"
 	"strings"
 	"time"
 )

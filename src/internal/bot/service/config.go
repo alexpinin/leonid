@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"leonid/src/internal/bot/repository"
-	"leonid/src/internal/db"
+	"leonid/src/internal/common/db"
+	"leonid/src/internal/common/logger"
 	"time"
 )
 
@@ -42,6 +44,7 @@ func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64)
 		return nil
 	})
 	if err != nil {
+		logger.Error(fmt.Sprintf("ConfigService.Activate: %v", err))
 		return false
 	}
 	return true
@@ -50,6 +53,7 @@ func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64)
 func (s *ConfigService) IsChatActive(ctx context.Context, chatID int64) bool {
 	_, err := s.configRepo.FindConfigByChatID(ctx, nil, chatID)
 	if err != nil {
+		logger.Error(fmt.Sprintf("ConfigService.IsChatActive: %v", err))
 		return false
 	}
 	return true
@@ -58,6 +62,7 @@ func (s *ConfigService) IsChatActive(ctx context.Context, chatID int64) bool {
 func (s *ConfigService) ListNicknames(ctx context.Context, chatID int64) []string {
 	config, err := s.configRepo.FindConfigByChatID(ctx, nil, chatID)
 	if err != nil {
+		logger.Error(fmt.Sprintf("ConfigService.ListNicknames: %v", err))
 		return nil
 	}
 	return config.Nicknames
@@ -66,6 +71,7 @@ func (s *ConfigService) ListNicknames(ctx context.Context, chatID int64) []strin
 func (s *ConfigService) FindSystemPrompt(ctx context.Context, chatID int64) string {
 	config, err := s.configRepo.FindConfigByChatID(ctx, nil, chatID)
 	if err != nil {
+		logger.Error(fmt.Sprintf("ConfigService.FindSystemPrompt: %v", err))
 		return ""
 	}
 	return config.SystemPrompt

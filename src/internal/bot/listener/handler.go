@@ -5,7 +5,7 @@ import (
 	"leonid/src/internal/bot/listener/handler"
 	"leonid/src/internal/bot/repository"
 	"leonid/src/internal/bot/service"
-	"leonid/src/internal/db"
+	"leonid/src/internal/common/db"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
