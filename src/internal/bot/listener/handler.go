@@ -18,17 +18,17 @@ type Handler struct {
 func NewHandler() *Handler {
 	database := db.NewDB()
 	configRepo := repository.NewConfigRepository(database)
-	chatService := service.NewChatService(database, configRepo)
+	configService := service.NewConfigService(database, configRepo)
 	quotaService := service.NewQuotaService()
 
 	inputGuard := handler.NewInputGuard()
-	chatChecker := handler.NewChatChecker(chatService)
-	chatActivator := handler.NewChatActivator(chatService)
+	chatChecker := handler.NewChatChecker(configService)
+	chatActivator := handler.NewChatActivator(configService)
 	authGuard := handler.NewAuthGuard()
-	callGuard := handler.NewCallGuard(chatService)
+	callGuard := handler.NewCallGuard(configService)
 	quotaGuard := handler.NewQuotaGuard(quotaService)
-	messageCleaner := handler.NewMessageCleaner(chatService)
-	messageSender := handler.NewMessageSender()
+	messageCleaner := handler.NewMessageCleaner(configService)
+	messageSender := handler.NewMessageSender(configService)
 
 	inputGuard.SetNext(chatChecker)
 	chatChecker.SetNext(chatActivator)

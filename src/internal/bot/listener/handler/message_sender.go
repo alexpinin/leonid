@@ -3,33 +3,38 @@ package handler
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"github.com/go-telegram/bot"
 	"github.com/revrost/go-openrouter"
-	"os"
 )
 
 type MessageSender struct {
 	basicHandler
 	llmClient *openrouter.Client
+	promptProvider
 }
 
-func NewMessageSender() *MessageSender {
+func NewMessageSender(pp promptProvider) *MessageSender {
 	return &MessageSender{
 		llmClient: openrouter.NewClient(
 			os.Getenv("LLM_TOKEN"),
 		),
+		promptProvider: pp,
 	}
 }
 
+type promptProvider interface {
+	FindSystemPrompt(context.Context, int64) string
+}
+
 func (h *MessageSender) Handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
-	message := u.Message.Text
+	systemPrompt := h.promptProvider.FindSystemPrompt(ctx, u.Message.Chat.ID)
+	if systemPrompt == "" {
+		return
+	}
 
-	llmRequest := fmt.Sprintf(`Ты не очень образованный и обидчивый человек.
-		Очень кратко ответь на вопрос, обращаясь к собеседнику "братишка".
-		Вопрос: "%s"`, message)
-
-	// todo add quota
-	// todo return error
+	llmRequest := fmt.Sprintf(`%s "%s"`, systemPrompt, u.Message.Text)
 	resp, err := h.llmClient.CreateChatCompletion(
 		context.Background(),
 		openrouter.ChatCompletionRequest{

@@ -9,28 +9,28 @@ import (
 	"time"
 )
 
-type ChatService struct {
+type ConfigService struct {
 	db         *db.DB
 	configRepo *repository.ConfigRepository
 }
 
-func NewChatService(
+func NewConfigService(
 	db *db.DB,
 	configRepo *repository.ConfigRepository,
-) *ChatService {
-	return &ChatService{
+) *ConfigService {
+	return &ConfigService{
 		db:         db,
 		configRepo: configRepo,
 	}
 }
 
-func (s *ChatService) Activate(ctx context.Context, pass string, chatID int64) bool {
+func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64) bool {
 	err := s.db.ExecInTx(ctx, func(tx *sql.Tx) error {
 		config, err := s.configRepo.FindConfigByPass(ctx, tx, pass)
 		if err != nil {
 			return err
 		}
-		if config.ChatActivatedAt.Before(time.Now()) {
+		if config.PassValidBy.Before(time.Now()) {
 			return errors.New("activation pass expired")
 		}
 		config.ChatID = chatID
@@ -47,7 +47,7 @@ func (s *ChatService) Activate(ctx context.Context, pass string, chatID int64) b
 	return true
 }
 
-func (s *ChatService) IsChatActive(ctx context.Context, chatID int64) bool {
+func (s *ConfigService) IsChatActive(ctx context.Context, chatID int64) bool {
 	_, err := s.configRepo.FindConfigByChatID(ctx, nil, chatID)
 	if err != nil {
 		return false
@@ -55,10 +55,18 @@ func (s *ChatService) IsChatActive(ctx context.Context, chatID int64) bool {
 	return true
 }
 
-func (s *ChatService) ListNicknames(ctx context.Context, chatID int64) []string {
+func (s *ConfigService) ListNicknames(ctx context.Context, chatID int64) []string {
 	config, err := s.configRepo.FindConfigByChatID(ctx, nil, chatID)
 	if err != nil {
 		return nil
 	}
 	return config.Nicknames
+}
+
+func (s *ConfigService) FindSystemPrompt(ctx context.Context, chatID int64) string {
+	config, err := s.configRepo.FindConfigByChatID(ctx, nil, chatID)
+	if err != nil {
+		return ""
+	}
+	return config.SystemPrompt
 }

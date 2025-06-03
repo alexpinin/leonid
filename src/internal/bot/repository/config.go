@@ -67,7 +67,7 @@ const updateConfigQuery = `
 `
 
 func (r *ConfigRepository) UpdateConfig(ctx context.Context, tx *sql.Tx, configID string, c Config) error {
-	_, err := r.db.ExecTx(ctx, tx, updateConfigQuery, configID, c.ChatID, c.ChatActivatedAt)
+	_, err := r.db.ExecTx(ctx, tx, updateConfigQuery, configID, c.ChatID, c.ChatActivatedAt.Unix())
 	if err != nil {
 		return fmt.Errorf("ConfigRepository.UpdateConfig: %w", err)
 	}
