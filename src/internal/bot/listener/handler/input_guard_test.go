@@ -15,9 +15,21 @@ func Test_Guard_Handle(t *testing.T) {
 	}{
 		{
 			description: "should call next handler if update is valid",
-			given:       &UpdateContext{Update: &models.Update{Message: &models.Message{}}},
+			given: &UpdateContext{
+				Update: &models.Update{
+					Message: &models.Message{
+						Chat: models.Chat{ID: 123},
+					},
+				},
+			},
 			expectedRunLog: []string{
-				"Handle: " + testUpdateToStr(&UpdateContext{Update: &models.Update{Message: &models.Message{}}}),
+				"Handle: " + testUpdateToStr(&UpdateContext{
+					Update: &models.Update{
+						Message: &models.Message{
+							Chat: models.Chat{ID: 123},
+						},
+					},
+				}),
 			},
 		},
 		{
@@ -28,6 +40,11 @@ func Test_Guard_Handle(t *testing.T) {
 		{
 			description:    "should not call next handler if update message is nil",
 			given:          &UpdateContext{Update: &models.Update{}},
+			expectedRunLog: []string{},
+		},
+		{
+			description:    "should not call next handler if chat ID is invalid",
+			given:          &UpdateContext{Update: &models.Update{Message: &models.Message{}}},
 			expectedRunLog: []string{},
 		},
 	}

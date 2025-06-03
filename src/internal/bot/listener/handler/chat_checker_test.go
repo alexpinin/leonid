@@ -10,14 +10,13 @@ import (
 )
 
 type chatCheckerStorageMock struct {
-	runLog        *[]string
-	chatExistsRes bool
-	chatExistsErr error
+	runLog *[]string
+	result bool
 }
 
-func (m *chatCheckerStorageMock) ChatExists(_ context.Context, chatID int64) (bool, error) {
+func (m *chatCheckerStorageMock) IsChatActive(_ context.Context, chatID int64) bool {
 	*m.runLog = append(*m.runLog, fmt.Sprintf("IsChatActive: %d", chatID))
-	return m.chatExistsRes, m.chatExistsErr
+	return m.result
 }
 
 func Test_ChatChecker_Handle(t *testing.T) {
@@ -33,29 +32,12 @@ func Test_ChatChecker_Handle(t *testing.T) {
 		expectedRunLog []string
 	}{
 		{
-			description: "should set chat as active and call next handler if chat exists",
-			storage:     chatCheckerStorageMock{chatExistsRes: true},
+			description: "should set IsChatActive from the IsChatActive function result and call next handler",
+			storage:     chatCheckerStorageMock{result: true},
 			given:       &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"IsChatActive: 123",
 				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: true}),
-			},
-		},
-		{
-			description: "should stop and exit if IsChatActive returns error",
-			storage:     chatCheckerStorageMock{chatExistsErr: testError},
-			given:       &UpdateContext{Update: update},
-			expectedRunLog: []string{
-				"IsChatActive: 123",
-			},
-		},
-		{
-			description: "should set chat as not active and call next handler if chat doesn't exist",
-			storage:     chatCheckerStorageMock{},
-			given:       &UpdateContext{Update: update},
-			expectedRunLog: []string{
-				"IsChatActive: 123",
-				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: false}),
 			},
 		},
 	}

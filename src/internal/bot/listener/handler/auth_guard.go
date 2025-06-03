@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+
 	"github.com/go-telegram/bot"
 )
 
@@ -15,7 +16,6 @@ func NewAuthGuard() *AuthGuard {
 
 func (h *AuthGuard) Handle(c context.Context, b *bot.Bot, u *UpdateContext) {
 	if !u.IsChatActive && !u.IsPassActive {
-		// todo add security logs
 		return
 	}
 	h.nextHandle(c, b, u)

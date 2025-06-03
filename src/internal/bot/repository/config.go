@@ -48,6 +48,8 @@ const findConfigByChatIDQuery = `
 	SELECT id, pass, pass_valid_by, chat_id, chat_activated_at, nicknames, system_prompt
 	FROM config
 	WHERE chat_id = $1
+`
+
 func (r *ConfigRepository) FindConfigByChatID(ctx context.Context, tx *sql.Tx, chatID int64) (Config, error) {
 	row := r.db.QueryRowTx(ctx, tx, findConfigByChatIDQuery, chatID)
 	config, err := scanConfig(row)
