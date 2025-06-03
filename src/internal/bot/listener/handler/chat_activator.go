@@ -2,22 +2,23 @@ package handler
 
 import (
 	"context"
+
 	"github.com/go-telegram/bot"
 )
 
 type ChatActivator struct {
 	basicHandler
-	activatorService chatActivator
+	activator chatActivator
 }
 
-func NewChatActivator(ca chatActivator) *ChatActivator {
+func NewChatActivator(cha chatActivator) *ChatActivator {
 	return &ChatActivator{
-		activatorService: ca,
+		activator: cha,
 	}
 }
 
 type chatActivator interface {
-	Activate(context.Context, string, int64) error
+	Activate(context.Context, string, int64) bool
 }
 
 func (h *ChatActivator) Handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
@@ -25,12 +26,6 @@ func (h *ChatActivator) Handle(ctx context.Context, b *bot.Bot, u *UpdateContext
 		h.nextHandle(ctx, b, u)
 		return
 	}
-	err := h.activatorService.Activate(ctx, u.Message.Text, u.Message.Chat.ID)
-	if err != nil {
-		u.IsPassActive = false
-		// todo log
-	} else {
-		u.IsPassActive = true
-	}
+	u.IsPassActive = h.activator.Activate(ctx, u.Message.Text, u.Message.Chat.ID)
 	h.nextHandle(ctx, b, u)
 }

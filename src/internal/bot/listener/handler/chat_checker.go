@@ -8,23 +8,20 @@ import (
 
 type ChatChecker struct {
 	basicHandler
-	storage chatCheckerStorage
+	checker chatChecker
 }
 
-func NewChatChecker(s chatCheckerStorage) *ChatChecker {
+func NewChatChecker(ch chatChecker) *ChatChecker {
 	return &ChatChecker{
-		storage: s,
+		checker: ch,
 	}
 }
 
-type chatCheckerStorage interface {
-	ChatExists(ctx context.Context, chatID int64) (bool, error)
+type chatChecker interface {
+	IsChatActive(ctx context.Context, chatID int64) bool
 }
 
 func (h *ChatChecker) Handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
-	_, err := h.storage.ChatExists(ctx, u.Message.Chat.ID)
-	if err == nil {
-		u.IsChatActive = true
-	}
+	u.IsChatActive = h.checker.IsChatActive(ctx, u.Message.Chat.ID)
 	h.nextHandle(ctx, b, u)
 }

@@ -16,7 +16,7 @@ type chatCheckerStorageMock struct {
 }
 
 func (m *chatCheckerStorageMock) ChatExists(_ context.Context, chatID int64) (bool, error) {
-	*m.runLog = append(*m.runLog, fmt.Sprintf("ChatExists: %d", chatID))
+	*m.runLog = append(*m.runLog, fmt.Sprintf("IsChatActive: %d", chatID))
 	return m.chatExistsRes, m.chatExistsErr
 }
 
@@ -37,16 +37,16 @@ func Test_ChatChecker_Handle(t *testing.T) {
 			storage:     chatCheckerStorageMock{chatExistsRes: true},
 			given:       &UpdateContext{Update: update},
 			expectedRunLog: []string{
-				"ChatExists: 123",
+				"IsChatActive: 123",
 				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: true}),
 			},
 		},
 		{
-			description: "should stop and exit if ChatExists returns error",
+			description: "should stop and exit if IsChatActive returns error",
 			storage:     chatCheckerStorageMock{chatExistsErr: testError},
 			given:       &UpdateContext{Update: update},
 			expectedRunLog: []string{
-				"ChatExists: 123",
+				"IsChatActive: 123",
 			},
 		},
 		{
@@ -54,7 +54,7 @@ func Test_ChatChecker_Handle(t *testing.T) {
 			storage:     chatCheckerStorageMock{},
 			given:       &UpdateContext{Update: update},
 			expectedRunLog: []string{
-				"ChatExists: 123",
+				"IsChatActive: 123",
 				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: false}),
 			},
 		},

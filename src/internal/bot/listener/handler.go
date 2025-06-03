@@ -21,28 +21,23 @@ func NewHandler() *Handler {
 	chatService := service.NewChatService(database, configRepo)
 	quotaService := service.NewQuotaService()
 
+	inputGuard := handler.NewInputGuard()
+	chatChecker := handler.NewChatChecker(chatService)
+	chatActivator := handler.NewChatActivator(chatService)
+	authGuard := handler.NewAuthGuard()
+	callGuard := handler.NewCallGuard(chatService)
+	quotaGuard := handler.NewQuotaGuard(quotaService)
+	messageCleaner := handler.NewMessageCleaner(chatService)
 	messageSender := handler.NewMessageSender()
 
-	messageCleaner := handler.NewMessageCleaner()
-	messageCleaner.SetNext(messageSender)
-
-	quotaGuard := handler.NewQuotaGuard(quotaService)
-	quotaGuard.SetNext(messageCleaner)
-
-	callGuard := handler.NewCallGuard()
-	callGuard.SetNext(quotaGuard)
-
-	authGuard := handler.NewAuthGuard()
-	authGuard.SetNext(callGuard)
-
-	chatActivator := handler.NewChatActivator(chatService)
-	chatActivator.SetNext(authGuard)
-
-	chatChecker := handler.NewChatChecker(chatService)
-	chatChecker.SetNext(chatActivator)
-
-	inputGuard := handler.NewInputGuard()
 	inputGuard.SetNext(chatChecker)
+	chatChecker.SetNext(chatActivator)
+	chatActivator.SetNext(authGuard)
+	authGuard.SetNext(callGuard)
+	callGuard.SetNext(quotaGuard)
+	quotaGuard.SetNext(messageCleaner)
+	messageCleaner.SetNext(messageSender)
+	messageSender.SetNext(nil)
 
 	return &Handler{
 		handlerHead: inputGuard,

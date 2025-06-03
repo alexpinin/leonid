@@ -2,32 +2,31 @@ package handler
 
 import (
 	"context"
-	"github.com/go-telegram/bot"
 	"strings"
+
+	"github.com/go-telegram/bot"
 )
 
 type MessageCleaner struct {
 	basicHandler
+	nicknameProvider nicknameProvider
 }
 
-func NewMessageCleaner() *MessageCleaner {
-	return &MessageCleaner{}
+func NewMessageCleaner(np nicknameProvider) *MessageCleaner {
+	return &MessageCleaner{nicknameProvider: np}
 }
 
-var nicknames = []string{
-	"леня",
-	"лёня",
-	"ленька",
-	"лёнька",
-	"леонид",
+type nicknameProvider interface {
+	ListNicknames(ctx context.Context, chatID int64) []string
 }
 
-func (h *MessageCleaner) Handle(c context.Context, b *bot.Bot, u *UpdateContext) {
+func (h *MessageCleaner) Handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
+	nicknames := h.nicknameProvider.ListNicknames(ctx, u.Message.Chat.ID)
 	message := strings.TrimSpace(strings.ToLower(u.Message.Text))
 	for _, nickname := range nicknames {
 		if strings.Contains(message, nickname) {
 			u.Message.Text = strings.ReplaceAll(message, nickname, "")
 		}
 	}
-	h.nextHandle(c, b, u)
+	h.nextHandle(ctx, b, u)
 }

@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"errors"
 	"leonid/src/internal/bot/repository"
 	"leonid/src/internal/db"
 	"time"
@@ -24,28 +24,41 @@ func NewChatService(
 	}
 }
 
-func (s *ChatService) Activate(ctx context.Context, pass string, chatID int64) error {
+func (s *ChatService) Activate(ctx context.Context, pass string, chatID int64) bool {
 	err := s.db.ExecInTx(ctx, func(tx *sql.Tx) error {
-		configID, err := s.configRepo.FindValidPassConfigID(ctx, tx, pass, time.Now())
+		config, err := s.configRepo.FindConfigByPass(ctx, tx, pass)
 		if err != nil {
 			return err
 		}
-		err = s.configRepo.ActivateChat(ctx, tx, configID, chatID, time.Now())
+		if config.ChatActivatedAt.Before(time.Now()) {
+			return errors.New("activation pass expired")
+		}
+		config.ChatID = chatID
+		config.ChatActivatedAt = time.Now()
+		err = s.configRepo.UpdateConfig(ctx, tx, config.ID, config)
 		if err != nil {
 			return err
 		}
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("ChatService.Activate: %w", err)
+		return false
 	}
-	return nil
+	return true
 }
 
-func (s *ChatService) ChatExists(ctx context.Context, chatID int64) (bool, error) {
-	_, err := s.configRepo.FindValidChatConfigID(ctx, nil, chatID)
+func (s *ChatService) IsChatActive(ctx context.Context, chatID int64) bool {
+	_, err := s.configRepo.FindConfigByChatID(ctx, nil, chatID)
 	if err != nil {
-		return false, fmt.Errorf("ChatService.ChatExists: %w", err)
+		return false
 	}
-	return true, nil
+	return true
+}
+
+func (s *ChatService) ListNicknames(ctx context.Context, chatID int64) []string {
+	config, err := s.configRepo.FindConfigByChatID(ctx, nil, chatID)
+	if err != nil {
+		return nil
+	}
+	return config.Nicknames
 }

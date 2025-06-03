@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"leonid/src/internal/db"
+	"strings"
 	"time"
 )
 
@@ -28,51 +29,67 @@ func NewConfigRepository(db *db.DB) *ConfigRepository {
 	}
 }
 
-const findValidPassConfigIDQuery = `
-	SELECT id
+const findConfigByPassQuery = `
+	SELECT id, pass, pass_valid_by, chat_id, chat_activated_at, nicknames, system_prompt
 	FROM config
 	WHERE pass = $1
-	  AND pass_valid_by >= $2
 `
 
-func (r *ConfigRepository) FindValidPassConfigID(ctx context.Context, tx *sql.Tx, pass string, validBy time.Time) (string, error) {
-	validByUnix := validBy.UTC().Unix()
-	row := r.db.QueryRowTx(ctx, tx, findValidPassConfigIDQuery, pass, validByUnix)
-	var configID string
-	err := row.Scan(&configID)
+func (r *ConfigRepository) FindConfigByPass(ctx context.Context, tx *sql.Tx, pass string) (Config, error) {
+	row := r.db.QueryRowTx(ctx, tx, findConfigByPassQuery, pass)
+	config, err := scanConfig(row)
 	if err != nil {
-		return "", fmt.Errorf("ConfigRepository.FindValidPassConfigID: %w", err)
+		return Config{}, fmt.Errorf("ConfigRepository.FindConfigByPass: %w", err)
 	}
-	return configID, nil
+	return config, nil
 }
 
-const activateChatQuery = `
+const findConfigByChatIDQuery = `
+	SELECT id, pass, pass_valid_by, chat_id, chat_activated_at, nicknames, system_prompt
+	FROM config
+	WHERE chat_id = $1
+func (r *ConfigRepository) FindConfigByChatID(ctx context.Context, tx *sql.Tx, chatID int64) (Config, error) {
+	row := r.db.QueryRowTx(ctx, tx, findConfigByChatIDQuery, chatID)
+	config, err := scanConfig(row)
+	if err != nil {
+		return Config{}, fmt.Errorf("ConfigRepository.FindConfigByChatID: %w", err)
+	}
+	return config, nil
+}
+
+const updateConfigQuery = `
 	UPDATE config
-	SET chat_id = $2, chat_activated_at = $3
+	SET chat_id = $2,
+	    chat_activated_at = $3
 	WHERE id = $1
 `
 
-func (r *ConfigRepository) ActivateChat(ctx context.Context, tx *sql.Tx, configID string, chatID int64, activatedAt time.Time) error {
-	activatedAtUnix := activatedAt.UTC().Unix()
-	_, err := r.db.ExecTx(ctx, tx, activateChatQuery, configID, chatID, activatedAtUnix)
+func (r *ConfigRepository) UpdateConfig(ctx context.Context, tx *sql.Tx, configID string, c Config) error {
+	_, err := r.db.ExecTx(ctx, tx, updateConfigQuery, configID, c.ChatID, c.ChatActivatedAt)
 	if err != nil {
-		return fmt.Errorf("ConfigRepository.ActivateChat: %w", err)
+		return fmt.Errorf("ConfigRepository.UpdateConfig: %w", err)
 	}
 	return nil
 }
 
-const findValidChatConfigIDQuery = `
-	SELECT id
-	FROM config
-	WHERE chat_id = $1
-`
-
-func (r *ConfigRepository) FindValidChatConfigID(ctx context.Context, tx *sql.Tx, chatID int64) (string, error) {
-	row := r.db.QueryRowTx(ctx, tx, findValidChatConfigIDQuery, chatID)
-	var configID string
-	err := row.Scan(&configID)
+func scanConfig(r *sql.Row) (Config, error) {
+	var config Config
+	var passValidByUnix, chatActivatedAt int64
+	var nicknamesStr string
+	err := r.Scan(
+		&config.ID,
+		&config.Pass,
+		&passValidByUnix,
+		&config.ChatID,
+		&chatActivatedAt,
+		&nicknamesStr,
+		&config.SystemPrompt,
+	)
 	if err != nil {
-		return "", fmt.Errorf("ConfigRepository.FindValidChatConfigID: %w", err)
+		return Config{}, err
 	}
-	return configID, nil
+	config.PassValidBy = time.Unix(passValidByUnix, 0)
+	config.ChatActivatedAt = time.Unix(chatActivatedAt, 0)
+	config.Nicknames = strings.Split(nicknamesStr, ",")
+	return config, nil
 }
