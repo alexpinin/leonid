@@ -2,12 +2,13 @@ package listener
 
 import (
 	"context"
-	"github.com/go-telegram/bot"
-	"github.com/go-telegram/bot/models"
 	"leonid/src/internal/bot/listener/handler"
 	"leonid/src/internal/bot/repository"
 	"leonid/src/internal/bot/service"
 	"leonid/src/internal/db"
+
+	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 )
 
 type Handler struct {
@@ -16,9 +17,8 @@ type Handler struct {
 
 func NewHandler() *Handler {
 	database := db.NewDB()
-	passRepo := repository.NewPassRepository(database)
-	chatRepo := repository.NewChatRepository(database)
-	chatService := service.NewChatService(database, passRepo, chatRepo)
+	configRepo := repository.NewConfigRepository(database)
+	chatService := service.NewChatService(database, configRepo)
 	quotaService := service.NewQuotaService()
 
 	messageSender := handler.NewMessageSender()

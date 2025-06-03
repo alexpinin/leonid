@@ -22,11 +22,8 @@ type chatCheckerStorage interface {
 }
 
 func (h *ChatChecker) Handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
-	exists, err := h.storage.ChatExists(ctx, u.Message.Chat.ID)
-	if err != nil {
-		return
-	}
-	if exists {
+	_, err := h.storage.ChatExists(ctx, u.Message.Chat.ID)
+	if err == nil {
 		u.IsChatActive = true
 	}
 	h.nextHandle(ctx, b, u)

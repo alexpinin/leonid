@@ -10,39 +10,27 @@ import (
 )
 
 type ChatService struct {
-	db       *db.DB
-	passRepo *repository.PassRepository
-	chatRepo *repository.ChatRepository
+	db         *db.DB
+	configRepo *repository.ConfigRepository
 }
 
 func NewChatService(
 	db *db.DB,
-	passRepo *repository.PassRepository,
-	chatRepo *repository.ChatRepository,
+	configRepo *repository.ConfigRepository,
 ) *ChatService {
 	return &ChatService{
-		db:       db,
-		passRepo: passRepo,
-		chatRepo: chatRepo,
+		db:         db,
+		configRepo: configRepo,
 	}
 }
 
 func (s *ChatService) Activate(ctx context.Context, pass string, chatID int64) error {
 	err := s.db.ExecInTx(ctx, func(tx *sql.Tx) error {
-		p, err := s.passRepo.FindPass(ctx, tx, pass, time.Now())
+		configID, err := s.configRepo.FindValidPassConfigID(ctx, tx, pass, time.Now())
 		if err != nil {
 			return err
 		}
-		err = s.passRepo.DeletePass(ctx, tx, pass)
-		if err != nil {
-			return err
-		}
-		chat := repository.Chat{
-			ID:           chatID,
-			Nicknames:    p.Nicknames,
-			SystemPrompt: p.SystemPrompt,
-		}
-		err = s.chatRepo.UpsertChat(ctx, tx, chat)
+		err = s.configRepo.ActivateChat(ctx, tx, configID, chatID, time.Now())
 		if err != nil {
 			return err
 		}
@@ -55,9 +43,9 @@ func (s *ChatService) Activate(ctx context.Context, pass string, chatID int64) e
 }
 
 func (s *ChatService) ChatExists(ctx context.Context, chatID int64) (bool, error) {
-	exists, err := s.chatRepo.ChatExists(ctx, nil, chatID)
+	_, err := s.configRepo.FindValidChatConfigID(ctx, nil, chatID)
 	if err != nil {
 		return false, fmt.Errorf("ChatService.ChatExists: %w", err)
 	}
-	return exists, nil
+	return true, nil
 }

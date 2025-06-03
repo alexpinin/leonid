@@ -1,14 +1,10 @@
-CREATE TABLE IF NOT EXISTS pass
+CREATE TABLE IF NOT EXISTS config
 (
-    pass          text    NOT NULL UNIQUE,
-    valid_by      integer NOT NULL,
-    nicknames     text    NOT NULL,
-    system_prompt text    NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS chat
-(
-    id            integer NOT NULL UNIQUE,
-    nicknames     text    NOT NULL,
-    system_prompt text    NOT NULL
+    id                text    NOT NULL UNIQUE,
+    pass              text    NOT NULL UNIQUE,
+    pass_valid_by     integer NOT NULL,
+    chat_id           integer NOT NULL,
+    chat_activated_at integer NOT NULL,
+    nicknames         text    NOT NULL,
+    system_prompt     text    NOT NULL
 );
