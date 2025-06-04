@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/go-telegram/bot"
@@ -24,5 +23,3 @@ func testUpdateToStr(uc *UpdateContext) string {
 	s, _ := json.Marshal(uc)
 	return string(s)
 }
-
-var testError = errors.New("test")

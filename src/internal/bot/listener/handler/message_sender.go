@@ -2,23 +2,17 @@ package handler
 
 import (
 	"context"
-	"os"
 
 	"github.com/go-telegram/bot"
-	"github.com/revrost/go-openrouter"
 )
 
 type MessageSender struct {
 	basicHandler
-	llmClient *openrouter.Client
-	messageSender
+	messageSender messageSender
 }
 
 func NewMessageSender(ms messageSender) *MessageSender {
 	return &MessageSender{
-		llmClient: openrouter.NewClient(
-			os.Getenv("LLM_TOKEN"),
-		),
 		messageSender: ms,
 	}
 }
