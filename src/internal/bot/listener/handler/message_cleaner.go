@@ -16,10 +16,6 @@ func NewMessageCleaner(np nicknameProvider) *MessageCleaner {
 	return &MessageCleaner{nicknameProvider: np}
 }
 
-type nicknameProvider interface {
-	ListNicknames(ctx context.Context, chatID int64) []string
-}
-
 func (h *MessageCleaner) Handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
 	nicknames := h.nicknameProvider.ListNicknames(ctx, u.Message.Chat.ID)
 	message := strings.TrimSpace(strings.ToLower(u.Message.Text))

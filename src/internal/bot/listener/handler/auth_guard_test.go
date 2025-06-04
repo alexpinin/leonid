@@ -26,7 +26,7 @@ func Test_AuthGuard_Handle(t *testing.T) {
 			},
 		},
 		{
-			description:    "should exit and not call next handler if neither is active",
+			description:    "should exit and not call next handler if neither chat nor pass is active",
 			given:          &UpdateContext{},
 			expectedRunLog: []string{},
 		},
@@ -34,10 +34,10 @@ func Test_AuthGuard_Handle(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			runLog := make([]string, 0)
-			h := NewAuthGuard()
-			h.SetNext(&mockHandler{runLog: &runLog})
+			sut := NewAuthGuard()
+			sut.SetNext(&mockHandler{runLog: &runLog})
 
-			h.Handle(nil, nil, tc.given)
+			sut.Handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})
