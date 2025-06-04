@@ -16,4 +16,5 @@ type UpdateContext struct {
 type UpdateHandler interface {
 	Handle(context.Context, *bot.Bot, *UpdateContext)
 	SetNext(UpdateHandler)
+	GetNext() UpdateHandler
 }

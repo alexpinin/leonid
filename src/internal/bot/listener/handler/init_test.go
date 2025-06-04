@@ -19,6 +19,10 @@ func (m *mockHandler) Handle(_ context.Context, _ *bot.Bot, uc *UpdateContext) {
 func (m *mockHandler) SetNext(UpdateHandler) {
 }
 
+func (m *mockHandler) GetNext() UpdateHandler {
+	return nil
+}
+
 func testUpdateToStr(uc *UpdateContext) string {
 	s, _ := json.Marshal(uc)
 	return string(s)
