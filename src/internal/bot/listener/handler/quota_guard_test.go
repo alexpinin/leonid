@@ -2,26 +2,20 @@ package handler
 
 import (
 	"fmt"
-	"github.com/go-telegram/bot/models"
 	"leonid/testutil"
 	"testing"
+
+	"github.com/go-telegram/bot/models"
 )
 
 type quotaManagerMock struct {
-	runLog          *[]string
-	getChatQuotaRes int
-	getChatQuotaErr error
-	useChatQuotaErr error
+	runLog *[]string
+	result bool
 }
 
-func (m *quotaManagerMock) GetChatQuota(chatID int64) (int, error) {
-	*m.runLog = append(*m.runLog, fmt.Sprintf("GetChatQuota: %d", chatID))
-	return m.getChatQuotaRes, m.getChatQuotaErr
-}
-
-func (m *quotaManagerMock) UseChatQuota(chatID int64) error {
+func (m *quotaManagerMock) UseChatQuota(chatID int64) bool {
 	*m.runLog = append(*m.runLog, fmt.Sprintf("UseChatQuota: %d", chatID))
-	return m.useChatQuotaErr
+	return m.result
 }
 
 func Test_QuotaGuard_Handle(t *testing.T) {
@@ -39,37 +33,19 @@ func Test_QuotaGuard_Handle(t *testing.T) {
 		expectedRunLog []string
 	}{
 		{
-			description:  "should call next handler if update quote",
-			quotaManager: &quotaManagerMock{getChatQuotaRes: 1},
+			description:  "should call next handler if UseChatQuota returns true",
+			quotaManager: &quotaManagerMock{result: true},
 			given:        &UpdateContext{Update: update},
 			expectedRunLog: []string{
-				"GetChatQuota: 123",
 				"UseChatQuota: 123",
 				"Handle: " + testUpdateToStr(&UpdateContext{Update: update}),
 			},
 		},
 		{
-			description:  "should exit if GetChatQuota returns error",
-			quotaManager: &quotaManagerMock{getChatQuotaErr: testError},
+			description:  "should not call next handler and exit if UseChatQuota returns false",
+			quotaManager: &quotaManagerMock{result: false},
 			given:        &UpdateContext{Update: update},
 			expectedRunLog: []string{
-				"GetChatQuota: 123",
-			},
-		},
-		{
-			description:  "should exit if quota is expired",
-			quotaManager: &quotaManagerMock{getChatQuotaRes: 0},
-			given:        &UpdateContext{Update: update},
-			expectedRunLog: []string{
-				"GetChatQuota: 123",
-			},
-		},
-		{
-			description:  "should exit if UseChatQuota returns error",
-			quotaManager: &quotaManagerMock{getChatQuotaRes: 1, useChatQuotaErr: testError},
-			given:        &UpdateContext{Update: update},
-			expectedRunLog: []string{
-				"GetChatQuota: 123",
 				"UseChatQuota: 123",
 			},
 		},
@@ -78,10 +54,10 @@ func Test_QuotaGuard_Handle(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			runLog := make([]string, 0)
 			tc.quotaManager.runLog = &runLog
-			h := NewQuotaGuard(tc.quotaManager)
-			h.SetNext(&mockHandler{runLog: &runLog})
+			moc := NewQuotaGuard(tc.quotaManager)
+			moc.SetNext(&mockHandler{runLog: &runLog})
 
-			h.Handle(nil, nil, tc.given)
+			moc.Handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

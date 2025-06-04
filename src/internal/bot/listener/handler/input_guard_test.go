@@ -7,7 +7,7 @@ import (
 	"github.com/go-telegram/bot/models"
 )
 
-func Test_Guard_Handle(t *testing.T) {
+func Test_InputGuard_Handle(t *testing.T) {
 	testCases := []struct {
 		description    string
 		given          *UpdateContext
@@ -33,17 +33,17 @@ func Test_Guard_Handle(t *testing.T) {
 			},
 		},
 		{
-			description:    "should not call next handler if update is nil",
+			description:    "should not call next handler and exit if update is nil",
 			given:          nil,
 			expectedRunLog: []string{},
 		},
 		{
-			description:    "should not call next handler if update message is nil",
+			description:    "should not call next handler and exit if update message is nil",
 			given:          &UpdateContext{Update: &models.Update{}},
 			expectedRunLog: []string{},
 		},
 		{
-			description:    "should not call next handler if chat ID is invalid",
+			description:    "should not call next handler and exit if chat ID is invalid",
 			given:          &UpdateContext{Update: &models.Update{Message: &models.Message{}}},
 			expectedRunLog: []string{},
 		},
@@ -51,10 +51,10 @@ func Test_Guard_Handle(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			runLog := make([]string, 0)
-			h := &InputGuard{}
-			h.SetNext(&mockHandler{runLog: &runLog})
+			sut := &InputGuard{}
+			sut.SetNext(&mockHandler{runLog: &runLog})
 
-			h.Handle(nil, nil, tc.given)
+			sut.Handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

@@ -45,10 +45,10 @@ func Test_ChatChecker_Handle(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			runLog := make([]string, 0)
 			tc.storage.runLog = &runLog
-			h := NewChatChecker(&tc.storage)
-			h.SetNext(&mockHandler{runLog: &runLog})
+			moc := NewChatChecker(&tc.storage)
+			moc.SetNext(&mockHandler{runLog: &runLog})
 
-			h.Handle(nil, nil, tc.given)
+			moc.Handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

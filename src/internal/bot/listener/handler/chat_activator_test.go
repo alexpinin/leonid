@@ -35,6 +35,14 @@ func Test_ChatActivator_Handle(t *testing.T) {
 		expectedRunLog []string
 	}{
 		{
+			description:   "it should do nothing and call next handler if chat is already active",
+			chatActivator: chatActivatorMock{},
+			given:         &UpdateContext{Update: update, IsChatActive: true},
+			expectedRunLog: []string{
+				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: true}),
+			},
+		},
+		{
 			description:   "it should set IsPassActive from Activate function result and call next handler",
 			chatActivator: chatActivatorMock{result: true},
 			given:         &UpdateContext{Update: update},
@@ -43,23 +51,15 @@ func Test_ChatActivator_Handle(t *testing.T) {
 				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsPassActive: true}),
 			},
 		},
-		{
-			description:   "it should do nothing if chat is already active",
-			chatActivator: chatActivatorMock{},
-			given:         &UpdateContext{Update: update, IsChatActive: true},
-			expectedRunLog: []string{
-				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: true}),
-			},
-		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			runLog := make([]string, 0)
 			tc.chatActivator.runLog = &runLog
-			h := NewChatActivator(&tc.chatActivator)
-			h.SetNext(&mockHandler{runLog: &runLog})
+			moc := NewChatActivator(&tc.chatActivator)
+			moc.SetNext(&mockHandler{runLog: &runLog})
 
-			h.Handle(nil, nil, tc.given)
+			moc.Handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

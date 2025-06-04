@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"leonid/testutil"
 	"testing"
 
@@ -13,12 +14,20 @@ type nicknameProviderMock struct {
 	result []string
 }
 
-func (p *nicknameProviderMock) ListNicknames(ctx context.Context, chatID int64) []string {
-	return p.result
+func (m *nicknameProviderMock) ListNicknames(_ context.Context, chatID int64) []string {
+	*m.runLog = append(*m.runLog, fmt.Sprintf("ListNicknames: %d", chatID))
+	return m.result
 }
 
 func Test_CallGuard_Handle(t *testing.T) {
-	update := &models.Update{Message: &models.Message{Text: "Hello, Bot"}}
+	update := &models.Update{
+		Message: &models.Message{
+			Text: "Hello, Bot",
+			Chat: models.Chat{
+				ID: 123,
+			},
+		},
+	}
 	testCases := []struct {
 		description      string
 		nicknameProvider nicknameProviderMock
@@ -30,6 +39,7 @@ func Test_CallGuard_Handle(t *testing.T) {
 			nicknameProvider: nicknameProviderMock{result: []string{"bot"}},
 			given:            &UpdateContext{Update: update},
 			expectedRunLog: []string{
+				"ListNicknames: 123",
 				"Handle: " + testUpdateToStr(&UpdateContext{Update: update}),
 			},
 		},
@@ -37,19 +47,25 @@ func Test_CallGuard_Handle(t *testing.T) {
 			description:      "should not call next handler and exit if bot is not called by a nickname",
 			nicknameProvider: nicknameProviderMock{result: []string{"bot2"}},
 			given:            &UpdateContext{Update: update},
-			expectedRunLog:   []string{},
+			expectedRunLog: []string{
+				"ListNicknames: 123",
+			},
 		},
 		{
 			description:      "should not call next handler and exit if there are no nicknames present",
 			nicknameProvider: nicknameProviderMock{result: nil},
 			given:            &UpdateContext{Update: update},
-			expectedRunLog:   []string{},
+			expectedRunLog: []string{
+				"ListNicknames: 123",
+			},
 		},
 		{
 			description:      "should ignore empty nicknames",
 			nicknameProvider: nicknameProviderMock{result: []string{""}},
 			given:            &UpdateContext{Update: update},
-			expectedRunLog:   []string{},
+			expectedRunLog: []string{
+				"ListNicknames: 123",
+			},
 		},
 	}
 	for _, tc := range testCases {
