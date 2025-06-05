@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"leonid/src/internal/bot/repository"
+	"leonid/src/internal/common/db"
 	"leonid/src/internal/common/logger"
 	"os"
 
@@ -24,30 +27,38 @@ type openAIContext struct {
 }
 
 type OpenAIMessageService struct {
+	db         *db.DB
 	configRepo *repository.ConfigRepository
 	llmClient  openai.Client
 }
 
-func NewOpenAIMessageService(cr *repository.ConfigRepository) *OpenAIMessageService {
+func NewOpenAIMessageService(db *db.DB, cr *repository.ConfigRepository) *OpenAIMessageService {
 	return &OpenAIMessageService{
+		db:         db,
+		configRepo: cr,
 		llmClient: openai.NewClient(
 			option.WithAPIKey(os.Getenv("OPENAI_LLM_TOKEN")),
 		),
-		configRepo: cr,
 	}
 }
 
 func (s *OpenAIMessageService) SendMessage(ctx context.Context, b *bot.Bot, chatID int64, message string) {
+	err := s.db.ExecInTx(ctx, func(tx *sql.Tx) error {
+		return s.sendMessage(ctx, b, chatID, message)
+	})
+	if err != nil {
+		logger.Error(fmt.Sprintf("OpenAIMessageService.SendMessage: %v", err))
+	}
+}
+
+func (s *OpenAIMessageService) sendMessage(ctx context.Context, b *bot.Bot, chatID int64, message string) error {
 	config, err := s.configRepo.FindConfigByChatID(ctx, nil, chatID)
 	if err != nil {
-		logger.Error(fmt.Sprintf("OpenAIMessageService.SendMessage: %v", err))
-		return
+		return err
 	}
-
 	aiContext, err := s.buildOpenAIContext(config.ConversationContext, message)
 	if err != nil {
-		logger.Error(fmt.Sprintf("OpenAIMessageService.SendMessage: %v", err))
-		return
+		return err
 	}
 
 	messages := []openai.ChatCompletionMessageParamUnion{
@@ -71,31 +82,28 @@ func (s *OpenAIMessageService) SendMessage(ctx context.Context, b *bot.Bot, chat
 		Model:    openai.ChatModelGPT4oMini,
 	})
 	if err != nil {
-		logger.Error(fmt.Sprintf("OpenAIMessageService.SendMessage: %v", err))
-		return
+		return err
 	}
 
 	if len(resp.Choices) == 0 {
-		return
+		return errors.New(fmt.Sprintf("no ai choices: %v", err))
 	}
-
 	answer := resp.Choices[0].Message.Content
+
 	config.ConversationContext, err = s.buildConversationContext(aiContext, answer)
 	if err != nil {
-		logger.Error(fmt.Sprintf("OpenAIMessageService.SendMessage: %v", err))
-		return
+		return err
 	}
-
 	err = s.configRepo.UpdateConfig(ctx, nil, config.ID, config)
 	if err != nil {
-		logger.Error(fmt.Sprintf("OpenAIMessageService.SendMessage: %v", err))
-		return
+		return err
 	}
 
 	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: chatID,
 		Text:   answer,
 	})
+	return nil
 }
 
 func (_ *OpenAIMessageService) buildOpenAIContext(conversationContext string, message string) (openAIContext, error) {
