@@ -19,7 +19,7 @@ func (m *chatActivatorMock) Activate(_ context.Context, pass string, chatID int6
 	return m.result
 }
 
-func Test_ChatActivator_Handle(t *testing.T) {
+func Test_chatActivator_handle(t *testing.T) {
 	update := &models.Update{
 		Message: &models.Message{
 			Text: "pass",
@@ -39,7 +39,7 @@ func Test_ChatActivator_Handle(t *testing.T) {
 			chatActivator: chatActivatorMock{},
 			given:         &UpdateContext{Update: update, IsChatActive: true},
 			expectedRunLog: []string{
-				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: true}),
+				"handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: true}),
 			},
 		},
 		{
@@ -48,7 +48,7 @@ func Test_ChatActivator_Handle(t *testing.T) {
 			given:         &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"Activate: pass, 123",
-				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsPassActive: true}),
+				"handle: " + testUpdateToStr(&UpdateContext{Update: update, IsPassActive: true}),
 			},
 		},
 	}
@@ -56,10 +56,10 @@ func Test_ChatActivator_Handle(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			runLog := make([]string, 0)
 			tc.chatActivator.runLog = &runLog
-			moc := NewChatActivator(&tc.chatActivator)
-			moc.SetNext(&mockHandler{runLog: &runLog})
+			moc := newChatActivator(&tc.chatActivator)
+			moc.setNext(&mockHandler{runLog: &runLog})
 
-			moc.Handle(nil, nil, tc.given)
+			moc.handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

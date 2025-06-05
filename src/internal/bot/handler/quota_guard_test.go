@@ -18,7 +18,7 @@ func (m *quotaManagerMock) UseChatQuota(chatID int64) bool {
 	return m.result
 }
 
-func Test_QuotaGuard_Handle(t *testing.T) {
+func Test_quotaGuard_handle(t *testing.T) {
 	update := &models.Update{
 		Message: &models.Message{
 			Chat: models.Chat{
@@ -38,7 +38,7 @@ func Test_QuotaGuard_Handle(t *testing.T) {
 			given:        &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"UseChatQuota: 123",
-				"Handle: " + testUpdateToStr(&UpdateContext{Update: update}),
+				"handle: " + testUpdateToStr(&UpdateContext{Update: update}),
 			},
 		},
 		{
@@ -54,10 +54,10 @@ func Test_QuotaGuard_Handle(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			runLog := make([]string, 0)
 			tc.quotaManager.runLog = &runLog
-			moc := NewQuotaGuard(tc.quotaManager)
-			moc.SetNext(&mockHandler{runLog: &runLog})
+			moc := newQuotaGuard(tc.quotaManager)
+			moc.setNext(&mockHandler{runLog: &runLog})
 
-			moc.Handle(nil, nil, tc.given)
+			moc.handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

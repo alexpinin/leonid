@@ -7,21 +7,21 @@ import (
 	"github.com/go-telegram/bot"
 )
 
-type CallGuard struct {
+type callGuard struct {
 	basicHandler
-	nicknameProvider nicknameProvider
+	nicknameProvider
 }
 
-func NewCallGuard(np nicknameProvider) *CallGuard {
-	return &CallGuard{nicknameProvider: np}
+func newCallGuard(np nicknameProvider) *callGuard {
+	return &callGuard{nicknameProvider: np}
 }
 
 type nicknameProvider interface {
 	ListNicknames(ctx context.Context, chatID int64) []string
 }
 
-func (h *CallGuard) Handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
-	nicknames := h.nicknameProvider.ListNicknames(ctx, u.Message.Chat.ID)
+func (h *callGuard) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
+	nicknames := h.ListNicknames(ctx, u.Message.Chat.ID)
 	message := strings.ToLower(u.Message.Text)
 	for _, nickname := range nicknames {
 		if nickname != "" && strings.Contains(message, nickname) {

@@ -11,3 +11,9 @@ https://openrouter.ai/
 ## Init DB
 Create a db file: `touch db/leonid.sqlite3`
 Populate db: `sqlite3 db/leonid.sqlite3 < db/init.sql`
+
+## Env variables
+DB_FILE
+BOT_TOKEN
+LLM_TOKEN
+OPENAI_LLM_TOKEN

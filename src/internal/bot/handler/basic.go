@@ -7,14 +7,14 @@ import (
 )
 
 type basicHandler struct {
-	next UpdateHandler
+	next updateHandler
 }
 
-func (h *basicHandler) SetNext(n UpdateHandler) {
+func (h *basicHandler) setNext(n updateHandler) {
 	h.next = n
 }
 
-func (h *basicHandler) GetNext() UpdateHandler {
+func (h *basicHandler) getNext() updateHandler {
 	return h.next
 }
 
@@ -22,5 +22,5 @@ func (h *basicHandler) nextHandle(c context.Context, b *bot.Bot, u *UpdateContex
 	if h.next == nil {
 		return
 	}
-	h.next.Handle(c, b, u)
+	h.next.handle(c, b, u)
 }

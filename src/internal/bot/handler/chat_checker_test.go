@@ -19,7 +19,7 @@ func (m *chatCheckerStorageMock) IsChatActive(_ context.Context, chatID int64) b
 	return m.result
 }
 
-func Test_ChatChecker_Handle(t *testing.T) {
+func Test_chatChecker_handle(t *testing.T) {
 	update := &models.Update{
 		Message: &models.Message{
 			Chat: models.Chat{ID: 123},
@@ -37,7 +37,7 @@ func Test_ChatChecker_Handle(t *testing.T) {
 			given:       &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"IsChatActive: 123",
-				"Handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: true}),
+				"handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: true}),
 			},
 		},
 	}
@@ -46,9 +46,9 @@ func Test_ChatChecker_Handle(t *testing.T) {
 			runLog := make([]string, 0)
 			tc.storage.runLog = &runLog
 			moc := NewChatChecker(&tc.storage)
-			moc.SetNext(&mockHandler{runLog: &runLog})
+			moc.setNext(&mockHandler{runLog: &runLog})
 
-			moc.Handle(nil, nil, tc.given)
+			moc.handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

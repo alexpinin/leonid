@@ -2,10 +2,12 @@ package bot
 
 import (
 	"context"
-	"github.com/go-telegram/bot"
-	"leonid/src/internal/bot/listener"
+
+	"leonid/src/internal/bot/handler"
 	"os"
 	"os/signal"
+
+	"github.com/go-telegram/bot"
 )
 
 var (
@@ -13,13 +15,13 @@ var (
 )
 
 func Start() {
-	handler := listener.NewHandler()
+	h := handler.NewBotHandler()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
 	opts := []bot.Option{
-		bot.WithDefaultHandler(handler.Handle),
+		bot.WithDefaultHandler(h.Handle),
 		bot.WithAllowedUpdates(bot.AllowedUpdates{
 			"message",
 		}),

@@ -19,7 +19,7 @@ func (m *nicknameProviderMock) ListNicknames(_ context.Context, chatID int64) []
 	return m.result
 }
 
-func Test_CallGuard_Handle(t *testing.T) {
+func Test_callGuard_handle(t *testing.T) {
 	update := &models.Update{
 		Message: &models.Message{
 			Text: "Hello, Bot",
@@ -40,7 +40,7 @@ func Test_CallGuard_Handle(t *testing.T) {
 			given:            &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"ListNicknames: 123",
-				"Handle: " + testUpdateToStr(&UpdateContext{Update: update}),
+				"handle: " + testUpdateToStr(&UpdateContext{Update: update}),
 			},
 		},
 		{
@@ -72,10 +72,10 @@ func Test_CallGuard_Handle(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			runLog := make([]string, 0)
 			tc.nicknameProvider.runLog = &runLog
-			sut := NewCallGuard(&tc.nicknameProvider)
-			sut.SetNext(&mockHandler{runLog: &runLog})
+			sut := newCallGuard(&tc.nicknameProvider)
+			sut.setNext(&mockHandler{runLog: &runLog})
 
-			sut.Handle(nil, nil, tc.given)
+			sut.handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

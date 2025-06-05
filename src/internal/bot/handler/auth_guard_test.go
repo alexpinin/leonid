@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_AuthGuard_Handle(t *testing.T) {
+func Test_authGuard_handle(t *testing.T) {
 	testCases := []struct {
 		description    string
 		given          *UpdateContext
@@ -15,14 +15,14 @@ func Test_AuthGuard_Handle(t *testing.T) {
 			description: "should call next handler if chat is active",
 			given:       &UpdateContext{IsChatActive: true},
 			expectedRunLog: []string{
-				"Handle: " + testUpdateToStr(&UpdateContext{IsChatActive: true}),
+				"handle: " + testUpdateToStr(&UpdateContext{IsChatActive: true}),
 			},
 		},
 		{
 			description: "should call next handler if pass phrase is active",
 			given:       &UpdateContext{IsPassActive: true},
 			expectedRunLog: []string{
-				"Handle: " + testUpdateToStr(&UpdateContext{IsPassActive: true}),
+				"handle: " + testUpdateToStr(&UpdateContext{IsPassActive: true}),
 			},
 		},
 		{
@@ -34,10 +34,10 @@ func Test_AuthGuard_Handle(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			runLog := make([]string, 0)
-			sut := NewAuthGuard()
-			sut.SetNext(&mockHandler{runLog: &runLog})
+			sut := newAuthGuard()
+			sut.setNext(&mockHandler{runLog: &runLog})
 
-			sut.Handle(nil, nil, tc.given)
+			sut.handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

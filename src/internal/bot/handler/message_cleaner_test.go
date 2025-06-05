@@ -7,7 +7,7 @@ import (
 	"github.com/go-telegram/bot/models"
 )
 
-func Test_MessageCleaner_Handle(t *testing.T) {
+func Test_messageCleaner_handle(t *testing.T) {
 	update := &models.Update{
 		Message: &models.Message{
 			Text: "Hello, Bot",
@@ -26,7 +26,7 @@ func Test_MessageCleaner_Handle(t *testing.T) {
 			given:            &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"ListNicknames: 123",
-				"Handle: " + testUpdateToStr(&UpdateContext{Update: &models.Update{
+				"handle: " + testUpdateToStr(&UpdateContext{Update: &models.Update{
 					Message: &models.Message{
 						Text: "hello, ",
 						Chat: models.Chat{ID: 123},
@@ -39,10 +39,10 @@ func Test_MessageCleaner_Handle(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			runLog := make([]string, 0)
 			tc.nicknameProvider.runLog = &runLog
-			sut := NewMessageCleaner(&tc.nicknameProvider)
-			sut.SetNext(&mockHandler{runLog: &runLog})
+			sut := newMessageCleaner(&tc.nicknameProvider)
+			sut.setNext(&mockHandler{runLog: &runLog})
 
-			sut.Handle(nil, nil, tc.given)
+			sut.handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

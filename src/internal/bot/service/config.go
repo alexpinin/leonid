@@ -12,23 +12,29 @@ import (
 )
 
 type ConfigService struct {
-	db         *db.DB
-	configRepo *repository.ConfigRepository
+	db   *db.DB
+	repo configRepo
 }
 
 func NewConfigService(
 	db *db.DB,
-	cr *repository.ConfigRepository,
+	cr configRepo,
 ) *ConfigService {
 	return &ConfigService{
-		db:         db,
-		configRepo: cr,
+		db:   db,
+		repo: cr,
 	}
+}
+
+type configRepo interface {
+	FindConfigByPass(ctx context.Context, tx *sql.Tx, pass string) (repository.Config, error)
+	FindConfigByChatID(ctx context.Context, tx *sql.Tx, chatID int64) (repository.Config, error)
+	UpdateConfig(ctx context.Context, tx *sql.Tx, configID string, c repository.Config) error
 }
 
 func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64) bool {
 	err := s.db.ExecInTx(ctx, func(tx *sql.Tx) error {
-		config, err := s.configRepo.FindConfigByPass(ctx, tx, pass)
+		config, err := s.repo.FindConfigByPass(ctx, tx, pass)
 		if err != nil {
 			return err
 		}
@@ -37,7 +43,7 @@ func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64)
 		}
 		config.ChatID = chatID
 		config.ChatActivatedAt = time.Now()
-		err = s.configRepo.UpdateConfig(ctx, tx, config.ID, config)
+		err = s.repo.UpdateConfig(ctx, tx, config.ID, config)
 		if err != nil {
 			return err
 		}
@@ -51,7 +57,7 @@ func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64)
 }
 
 func (s *ConfigService) IsChatActive(ctx context.Context, chatID int64) bool {
-	_, err := s.configRepo.FindConfigByChatID(ctx, nil, chatID)
+	_, err := s.repo.FindConfigByChatID(ctx, nil, chatID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("ConfigService.IsChatActive: %v", err))
 		return false
@@ -60,7 +66,7 @@ func (s *ConfigService) IsChatActive(ctx context.Context, chatID int64) bool {
 }
 
 func (s *ConfigService) ListNicknames(ctx context.Context, chatID int64) []string {
-	config, err := s.configRepo.FindConfigByChatID(ctx, nil, chatID)
+	config, err := s.repo.FindConfigByChatID(ctx, nil, chatID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("ConfigService.ListNicknames: %v", err))
 		return nil
@@ -69,7 +75,7 @@ func (s *ConfigService) ListNicknames(ctx context.Context, chatID int64) []strin
 }
 
 func (s *ConfigService) FindSystemPrompt(ctx context.Context, chatID int64) string {
-	config, err := s.configRepo.FindConfigByChatID(ctx, nil, chatID)
+	config, err := s.repo.FindConfigByChatID(ctx, nil, chatID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("ConfigService.FindSystemPrompt: %v", err))
 		return ""

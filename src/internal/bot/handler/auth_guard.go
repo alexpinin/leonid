@@ -6,15 +6,15 @@ import (
 	"github.com/go-telegram/bot"
 )
 
-type AuthGuard struct {
+type authGuard struct {
 	basicHandler
 }
 
-func NewAuthGuard() *AuthGuard {
-	return &AuthGuard{}
+func newAuthGuard() *authGuard {
+	return &authGuard{}
 }
 
-func (h *AuthGuard) Handle(c context.Context, b *bot.Bot, u *UpdateContext) {
+func (h *authGuard) handle(c context.Context, b *bot.Bot, u *UpdateContext) {
 	if !u.IsChatActive && !u.IsPassActive {
 		return
 	}

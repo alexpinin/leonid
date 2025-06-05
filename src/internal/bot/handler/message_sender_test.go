@@ -18,7 +18,7 @@ func (m *messageSenderMock) SendMessage(_ context.Context, _ *bot.Bot, chatID in
 	*m.runLog = append(*m.runLog, fmt.Sprintf("SendMessage: %d, %s", chatID, message))
 }
 
-func Test_MessageSender_Handle(t *testing.T) {
+func Test_messageSender_handle(t *testing.T) {
 	update := &models.Update{
 		Message: &models.Message{
 			Text: "message",
@@ -37,7 +37,7 @@ func Test_MessageSender_Handle(t *testing.T) {
 			given:         &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"SendMessage: 123, message",
-				"Handle: " + testUpdateToStr(&UpdateContext{Update: update}),
+				"handle: " + testUpdateToStr(&UpdateContext{Update: update}),
 			},
 		},
 	}
@@ -45,10 +45,10 @@ func Test_MessageSender_Handle(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			runLog := make([]string, 0)
 			tc.messageSender.runLog = &runLog
-			sut := NewMessageSender(&tc.messageSender)
-			sut.SetNext(&mockHandler{runLog: &runLog})
+			sut := newMessageSender(&tc.messageSender)
+			sut.setNext(&mockHandler{runLog: &runLog})
 
-			sut.Handle(nil, nil, tc.given)
+			sut.handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

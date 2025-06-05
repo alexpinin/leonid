@@ -7,7 +7,7 @@ import (
 	"github.com/go-telegram/bot/models"
 )
 
-func Test_InputGuard_Handle(t *testing.T) {
+func Test_inputGuard_handle(t *testing.T) {
 	testCases := []struct {
 		description    string
 		given          *UpdateContext
@@ -23,7 +23,7 @@ func Test_InputGuard_Handle(t *testing.T) {
 				},
 			},
 			expectedRunLog: []string{
-				"Handle: " + testUpdateToStr(&UpdateContext{
+				"handle: " + testUpdateToStr(&UpdateContext{
 					Update: &models.Update{
 						Message: &models.Message{
 							Chat: models.Chat{ID: 123},
@@ -51,10 +51,10 @@ func Test_InputGuard_Handle(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			runLog := make([]string, 0)
-			sut := &InputGuard{}
-			sut.SetNext(&mockHandler{runLog: &runLog})
+			sut := &inputGuard{}
+			sut.setNext(&mockHandler{runLog: &runLog})
 
-			sut.Handle(nil, nil, tc.given)
+			sut.handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})
