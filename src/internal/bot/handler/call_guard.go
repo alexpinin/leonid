@@ -29,4 +29,14 @@ func (h *callGuard) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
 			return
 		}
 	}
+	if u.Message.ReplyToMessage == nil || u.Message.ReplyToMessage.From == nil {
+		return
+	}
+	replyToNickname := strings.ToLower(u.Message.ReplyToMessage.From.FirstName)
+	for _, nickname := range nicknames {
+		if nickname == replyToNickname {
+			h.nextHandle(ctx, b, u)
+			return
+		}
+	}
 }

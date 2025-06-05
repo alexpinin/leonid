@@ -67,6 +67,90 @@ func Test_callGuard_handle(t *testing.T) {
 				"ListNicknames: 123",
 			},
 		},
+		{
+			description:      "should call next handler if bot is called by in reply",
+			nicknameProvider: nicknameProviderMock{result: []string{"bot"}},
+			given: &UpdateContext{Update: &models.Update{
+				Message: &models.Message{
+					Text: "Hello",
+					Chat: models.Chat{
+						ID: 123,
+					},
+					ReplyToMessage: &models.Message{
+						From: &models.User{
+							FirstName: "Bot",
+						},
+					},
+				},
+			}},
+			expectedRunLog: []string{
+				"ListNicknames: 123",
+				"handle: " + testUpdateToStr(&UpdateContext{Update: &models.Update{
+					Message: &models.Message{
+						Text: "Hello",
+						Chat: models.Chat{
+							ID: 123,
+						},
+						ReplyToMessage: &models.Message{
+							From: &models.User{
+								FirstName: "Bot",
+							},
+						},
+					},
+				}}),
+			},
+		},
+		{
+			description:      "should not call next handler and exit if replay name doesn't match",
+			nicknameProvider: nicknameProviderMock{result: []string{"bot"}},
+			given: &UpdateContext{Update: &models.Update{
+				Message: &models.Message{
+					Text: "Hello",
+					Chat: models.Chat{
+						ID: 123,
+					},
+					ReplyToMessage: &models.Message{
+						From: &models.User{
+							FirstName: "Bot1",
+						},
+					},
+				},
+			}},
+			expectedRunLog: []string{
+				"ListNicknames: 123",
+			},
+		},
+		{
+			description:      "should not call next handler and exit if From is nil",
+			nicknameProvider: nicknameProviderMock{result: []string{"bot"}},
+			given: &UpdateContext{Update: &models.Update{
+				Message: &models.Message{
+					Text: "Hello",
+					Chat: models.Chat{
+						ID: 123,
+					},
+					ReplyToMessage: &models.Message{},
+				},
+			}},
+			expectedRunLog: []string{
+				"ListNicknames: 123",
+			},
+		},
+		{
+			description:      "should not call next handler and exit if ReplyToMessage is nil",
+			nicknameProvider: nicknameProviderMock{result: []string{"bot"}},
+			given: &UpdateContext{Update: &models.Update{
+				Message: &models.Message{
+					Text: "Hello",
+					Chat: models.Chat{
+						ID: 123,
+					},
+				},
+			}},
+			expectedRunLog: []string{
+				"ListNicknames: 123",
+			},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
