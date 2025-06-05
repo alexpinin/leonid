@@ -10,13 +10,14 @@ import (
 )
 
 type Config struct {
-	ID              string
-	ChatID          int64
-	ChatActivatedAt time.Time
-	Pass            string
-	PassValidBy     time.Time
-	Nicknames       []string
-	SystemPrompt    string
+	ID                  string
+	ChatID              int64
+	ChatActivatedAt     time.Time
+	Pass                string
+	PassValidBy         time.Time
+	Nicknames           []string
+	SystemPrompt        string
+	ConversationContext string
 }
 
 type ConfigRepository struct {
@@ -30,7 +31,7 @@ func NewConfigRepository(db *db.DB) *ConfigRepository {
 }
 
 const findConfigByPassQuery = `
-	SELECT id, pass, pass_valid_by, chat_id, chat_activated_at, nicknames, system_prompt
+	SELECT id, pass, pass_valid_by, chat_id, chat_activated_at, nicknames, system_prompt, conversation_context
 	FROM config
 	WHERE pass = $1
 `
@@ -45,7 +46,7 @@ func (r *ConfigRepository) FindConfigByPass(ctx context.Context, tx *sql.Tx, pas
 }
 
 const findConfigByChatIDQuery = `
-	SELECT id, pass, pass_valid_by, chat_id, chat_activated_at, nicknames, system_prompt
+	SELECT id, pass, pass_valid_by, chat_id, chat_activated_at, nicknames, system_prompt, conversation_context
 	FROM config
 	WHERE chat_id = $1
 `
@@ -62,12 +63,14 @@ func (r *ConfigRepository) FindConfigByChatID(ctx context.Context, tx *sql.Tx, c
 const updateConfigQuery = `
 	UPDATE config
 	SET chat_id = $2,
-	    chat_activated_at = $3
+	    chat_activated_at = $3,
+	    conversation_context = $4
 	WHERE id = $1
 `
 
 func (r *ConfigRepository) UpdateConfig(ctx context.Context, tx *sql.Tx, configID string, c Config) error {
-	_, err := r.db.ExecTx(ctx, tx, updateConfigQuery, configID, c.ChatID, c.ChatActivatedAt.Unix())
+	_, err := r.db.ExecTx(ctx, tx, updateConfigQuery,
+		configID, c.ChatID, c.ChatActivatedAt.Unix(), c.ConversationContext)
 	if err != nil {
 		return fmt.Errorf("ConfigRepository.UpdateConfig: %w", err)
 	}
@@ -86,6 +89,7 @@ func scanConfig(r *sql.Row) (Config, error) {
 		&chatActivatedAt,
 		&nicknamesStr,
 		&config.SystemPrompt,
+		&config.ConversationContext,
 	)
 	if err != nil {
 		return Config{}, err
