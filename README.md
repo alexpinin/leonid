@@ -5,15 +5,13 @@
 2. Get bot token
 3. Change bot privacy with @BotFather and let it read all the messages
 
-## LLM:
-https://openrouter.ai/
-
 ## Init DB
-Create a db file: `touch db/leonid.sqlite3`
-Populate db: `sqlite3 db/leonid.sqlite3 < db/init.sql`
+- Create a db file: `touch db/leonid.sqlite3`
+- Create db schema: `sqlite3 db/leonid.sqlite3 < db/init.sql`
 
-## Env variables
-DB_FILE
-BOT_TOKEN
-LLM_TOKEN
-OPENAI_LLM_TOKEN
+## Build
+- Run `./build.sh`
+
+## Run
+- Update the `run.sh` file and set the environment variables
+- Run `./run.sh`
