@@ -31,7 +31,7 @@ func NewBotHandler() *BotHandler {
 	configRepo := repository.NewConfigRepository(database)
 	configService := service.NewConfigService(database, configRepo)
 	quotaService := service.NewQuotaService()
-	messageService := service.NewOpenAIMessageService(database, configRepo)
+	messageService := service.NewDeepSeekMessageService(database, configRepo)
 
 	handlers := []updateHandler{
 		newInputGuard(),
