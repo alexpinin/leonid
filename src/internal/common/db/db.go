@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"leonid/src/internal/common/logger"
 	"os"
 
 	"database/sql"
@@ -22,12 +23,14 @@ func NewDB() *DB {
 	}
 	dbFile := os.Getenv("DB_FILE")
 	if dbFile == "" {
-		panic("DB_FILE environment variable not set")
+		logger.Panic("DB_FILE environment variable not set")
+		return nil
 	}
 	var err error
 	db, err := sql.Open("sqlite", dbFile)
 	if err != nil {
-		panic(err)
+		logger.Panic(err.Error())
+		return nil
 	}
 	dbOnlyInstance = &DB{db: db}
 	return dbOnlyInstance

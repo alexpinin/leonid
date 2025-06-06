@@ -2,6 +2,8 @@ package bot
 
 import (
 	"context"
+	"fmt"
+	"leonid/src/internal/common/logger"
 
 	"leonid/src/internal/bot/handler"
 	"os"
@@ -15,6 +17,8 @@ var (
 )
 
 func Start() {
+	logger.Info(fmt.Sprintf("Starting bot"))
+
 	h := handler.NewBotHandler()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -29,7 +33,8 @@ func Start() {
 
 	b, err := bot.New(botToken, opts...)
 	if err != nil {
-		panic(err)
+		logger.Panic(err.Error())
+		return
 	}
 
 	b.Start(ctx)

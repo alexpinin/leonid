@@ -28,3 +28,4 @@ go.work.sum
 .idea
 db/leonid.sqlite3
 leonid
+leonid.log
