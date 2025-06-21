@@ -19,7 +19,6 @@ func Test_Handler(t *testing.T) {
 			"*handler.authGuard",
 			"*handler.callGuard",
 			"*handler.quotaGuard",
-			"*handler.messageCleaner",
 			"*handler.messageSender",
 		}
 

@@ -17,6 +17,7 @@ type Config struct {
 	PassValidBy         time.Time
 	Nicknames           []string
 	SystemPrompt        string
+	MessagePrompt       string
 	ConversationContext string
 }
 
@@ -31,7 +32,16 @@ func NewConfigRepository(db *db.DB) *ConfigRepository {
 }
 
 const findConfigByPassQuery = `
-	SELECT id, pass, pass_valid_by, chat_id, chat_activated_at, nicknames, system_prompt, conversation_context
+	SELECT
+	    id,
+	    pass,
+	    pass_valid_by,
+	    chat_id,
+	    chat_activated_at,
+	    nicknames,
+	    system_prompt,
+	    message_prompt,
+	    conversation_context
 	FROM config
 	WHERE pass = $1
 `
@@ -46,7 +56,16 @@ func (r *ConfigRepository) FindConfigByPass(ctx context.Context, tx *sql.Tx, pas
 }
 
 const findConfigByChatIDQuery = `
-	SELECT id, pass, pass_valid_by, chat_id, chat_activated_at, nicknames, system_prompt, conversation_context
+	SELECT
+		id,
+	    pass,
+	    pass_valid_by,
+	    chat_id,
+	    chat_activated_at,
+	    nicknames,
+	    system_prompt,
+	    message_prompt,
+	    conversation_context
 	FROM config
 	WHERE chat_id = $1
 `
@@ -89,6 +108,7 @@ func scanConfig(r *sql.Row) (Config, error) {
 		&chatActivatedAt,
 		&nicknamesStr,
 		&config.SystemPrompt,
+		&config.MessagePrompt,
 		&config.ConversationContext,
 	)
 	if err != nil {

@@ -40,7 +40,6 @@ func NewBotHandler() *BotHandler {
 		newAuthGuard(),
 		newCallGuard(configService),
 		newQuotaGuard(quotaService),
-		newMessageCleaner(configService),
 		newMessageSender(messageService),
 		nil,
 	}

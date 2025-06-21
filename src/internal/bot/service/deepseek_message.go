@@ -6,15 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"leonid/src/internal/bot/repository"
-	"leonid/src/internal/common/db"
-	"leonid/src/internal/common/logger"
-	"os"
-
 	"github.com/go-telegram/bot"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
+	"leonid/src/internal/bot/repository"
+	"leonid/src/internal/common/db"
+	"leonid/src/internal/common/logger"
+	"os"
+	"strings"
 )
 
 type DeepSeekMessageService struct {
@@ -48,7 +48,7 @@ func (s *DeepSeekMessageService) sendMessage(ctx context.Context, b *bot.Bot, ch
 	if err != nil {
 		return err
 	}
-	aiContext, err := s.buildOpenAIContext(config.ConversationContext, message)
+	aiContext, err := s.buildOpenAIContext(config, message)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,8 @@ func (s *DeepSeekMessageService) sendMessage(ctx context.Context, b *bot.Bot, ch
 		{
 			OfSystem: &openai.ChatCompletionSystemMessageParam{
 				Content: openai.ChatCompletionSystemMessageParamContentUnion{
-					OfString: param.Opt[string]{Value: config.SystemPrompt},
+					OfString: param.Opt[string]{Value: config.SystemPrompt +
+						fmt.Sprintf(". Your nicknames are: %s", strings.Join(config.Nicknames, ","))},
 				},
 			},
 		},
@@ -98,9 +99,9 @@ func (s *DeepSeekMessageService) sendMessage(ctx context.Context, b *bot.Bot, ch
 	return nil
 }
 
-func (_ *DeepSeekMessageService) buildOpenAIContext(conversationContext string, message string) (openAIContext, error) {
+func (_ *DeepSeekMessageService) buildOpenAIContext(config repository.Config, message string) (openAIContext, error) {
 	aiContext := openAIContext{}
-	err := json.Unmarshal([]byte(conversationContext), &aiContext)
+	err := json.Unmarshal([]byte(config.ConversationContext), &aiContext)
 	if err != nil {
 		return openAIContext{}, err
 	}
@@ -112,7 +113,7 @@ func (_ *DeepSeekMessageService) buildOpenAIContext(conversationContext string, 
 	aiContext.Messages = append(aiContext.Messages, openAIMessage{
 		OfUser: &openai.ChatCompletionUserMessageParam{
 			Content: openai.ChatCompletionUserMessageParamContentUnion{
-				OfString: param.Opt[string]{Value: message},
+				OfString: param.Opt[string]{Value: message + fmt.Sprintf(". %s", config.MessagePrompt)},
 			},
 		},
 	})
