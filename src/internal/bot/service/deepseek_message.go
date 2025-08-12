@@ -6,6 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/go-telegram/bot"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
@@ -13,8 +16,6 @@ import (
 	"leonid/src/internal/bot/repository"
 	"leonid/src/internal/common/db"
 	"leonid/src/internal/common/logger"
-	"os"
-	"strings"
 )
 
 type DeepSeekMessageService struct {
@@ -72,7 +73,7 @@ func (s *DeepSeekMessageService) sendMessage(ctx context.Context, b *bot.Bot, ch
 
 	resp, err := s.llmClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
 		Messages: messages,
-		Model:    "deepseek-chat",
+		Model:    "deepseek-reasoner",
 	})
 	if err != nil {
 		return err
