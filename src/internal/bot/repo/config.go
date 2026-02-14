@@ -12,16 +12,13 @@ import (
 )
 
 type ConfigRepo struct {
-	db *db.DB
 }
 
-func NewConfigRepo(db *db.DB) *ConfigRepo {
-	return &ConfigRepo{
-		db: db,
-	}
+func NewConfigRepo() *ConfigRepo {
+	return &ConfigRepo{}
 }
 
-func (r *ConfigRepo) FindConfigByPass(ctx context.Context, tx *sql.Tx, pass string) (dto.Config, error) {
+func (r *ConfigRepo) FindConfigByPass(ex db.Executor, ctx context.Context, pass string) (dto.Config, error) {
 	query := `
 		SELECT
 			id,
@@ -36,7 +33,7 @@ func (r *ConfigRepo) FindConfigByPass(ctx context.Context, tx *sql.Tx, pass stri
 		FROM config
 		WHERE pass = $1
 	`
-	row := r.db.QueryRowTx(ctx, tx, query, pass)
+	row := ex.QueryRowContext(ctx, query, pass)
 	config, err := scanConfig(row)
 	if err != nil {
 		return dto.Config{}, fmt.Errorf("ConfigRepo.FindConfigByPass: %w", err)
@@ -44,7 +41,7 @@ func (r *ConfigRepo) FindConfigByPass(ctx context.Context, tx *sql.Tx, pass stri
 	return config, nil
 }
 
-func (r *ConfigRepo) FindConfigByChatID(ctx context.Context, tx *sql.Tx, chatID int64) (dto.Config, error) {
+func (r *ConfigRepo) FindConfigByChatID(ex db.Executor, ctx context.Context, chatID int64) (dto.Config, error) {
 	query := `
 		SELECT
 			id,
@@ -59,7 +56,7 @@ func (r *ConfigRepo) FindConfigByChatID(ctx context.Context, tx *sql.Tx, chatID 
 		FROM config
 		WHERE chat_id = $1
 	`
-	row := r.db.QueryRowTx(ctx, tx, query, chatID)
+	row := ex.QueryRowContext(ctx, query, chatID)
 	config, err := scanConfig(row)
 	if err != nil {
 		return dto.Config{}, fmt.Errorf("ConfigRepo.FindConfigByChatID: %w", err)
@@ -67,7 +64,7 @@ func (r *ConfigRepo) FindConfigByChatID(ctx context.Context, tx *sql.Tx, chatID 
 	return config, nil
 }
 
-func (r *ConfigRepo) UpdateConfig(ctx context.Context, tx *sql.Tx, configID string, c dto.Config) error {
+func (r *ConfigRepo) UpdateConfig(ex db.Executor, ctx context.Context, configID string, c dto.Config) error {
 	const query = `
 		UPDATE config
 		SET chat_id = $2,
@@ -75,7 +72,7 @@ func (r *ConfigRepo) UpdateConfig(ctx context.Context, tx *sql.Tx, configID stri
 			conversation_context = $4
 		WHERE id = $1
 	`
-	_, err := r.db.ExecTx(ctx, tx, query,
+	_, err := ex.ExecContext(ctx, query,
 		configID, c.ChatID, c.ChatActivatedAt.Unix(), c.ConversationContext)
 	if err != nil {
 		return fmt.Errorf("ConfigRepo.UpdateConfig: %w", err)

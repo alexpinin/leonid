@@ -2,10 +2,13 @@ package bot
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"os/signal"
 
+	"leonid/src/internal/bot/repo"
+	"leonid/src/internal/bot/service"
 	"leonid/src/internal/db"
 	"leonid/src/internal/logger"
 
@@ -18,16 +21,28 @@ var (
 	botToken = os.Getenv("BOT_TOKEN")
 )
 
-func Start(database *db.DB) error {
+func Start(database *sql.DB) error {
 	logger.Info(fmt.Sprintf("Starting bot"))
 
-	h := handler.NewBotHandler(database)
+	executor := db.NewAppQueryExecutor(database)
+
+	configRepo := repo.NewConfigRepo()
+
+	configService := service.NewConfigService(executor, configRepo)
+	quotaService := service.NewQuotaService()
+	messageService := service.NewOpenAIMessageService(executor, configRepo)
+
+	botHandler := handler.NewBotHandler(
+		configService,
+		quotaService,
+		messageService,
+	)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
 	opts := []bot.Option{
-		bot.WithDefaultHandler(h.Handle),
+		bot.WithDefaultHandler(botHandler.Handle),
 		bot.WithAllowedUpdates(bot.AllowedUpdates{
 			"message",
 		}),

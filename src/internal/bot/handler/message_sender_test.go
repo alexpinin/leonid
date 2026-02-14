@@ -3,8 +3,9 @@ package handler
 import (
 	"context"
 	"fmt"
-	"leonid/testutil"
 	"testing"
+
+	"leonid/testutil"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -14,8 +15,9 @@ type messageSenderMock struct {
 	runLog *[]string
 }
 
-func (m *messageSenderMock) SendMessage(_ context.Context, _ *bot.Bot, chatID int64, message string) {
+func (m *messageSenderMock) SendMessage(_ context.Context, _ *bot.Bot, chatID int64, message string) error {
 	*m.runLog = append(*m.runLog, fmt.Sprintf("SendMessage: %d, %s", chatID, message))
+	return nil
 }
 
 func Test_messageSender_handle(t *testing.T) {

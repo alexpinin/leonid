@@ -13,29 +13,29 @@ import (
 )
 
 type ConfigService struct {
-	db   *db.DB
-	repo configRepo
+	executor   db.QueryExecutor
+	configRepo ConfigRepo
 }
 
 func NewConfigService(
-	db *db.DB,
-	cr configRepo,
+	qe db.QueryExecutor,
+	cr ConfigRepo,
 ) *ConfigService {
 	return &ConfigService{
-		db:   db,
-		repo: cr,
+		executor:   qe,
+		configRepo: cr,
 	}
 }
 
-type configRepo interface {
-	FindConfigByPass(ctx context.Context, tx *sql.Tx, pass string) (dto.Config, error)
-	FindConfigByChatID(ctx context.Context, tx *sql.Tx, chatID int64) (dto.Config, error)
-	UpdateConfig(ctx context.Context, tx *sql.Tx, configID string, c dto.Config) error
+type ConfigRepo interface {
+	FindConfigByPass(db.Executor, context.Context, string) (dto.Config, error)
+	FindConfigByChatID(db.Executor, context.Context, int64) (dto.Config, error)
+	UpdateConfig(db.Executor, context.Context, string, dto.Config) error
 }
 
 func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64) bool {
-	err := s.db.ExecInTx(ctx, func(tx *sql.Tx) error {
-		config, err := s.repo.FindConfigByPass(ctx, tx, pass)
+	err := s.executor.ExecuteInTx(func(tx *sql.Tx) error {
+		config, err := s.configRepo.FindConfigByPass(tx, ctx, pass)
 		if err != nil {
 			return err
 		}
@@ -44,7 +44,7 @@ func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64)
 		}
 		config.ChatID = chatID
 		config.ChatActivatedAt = time.Now()
-		err = s.repo.UpdateConfig(ctx, tx, config.ID, config)
+		err = s.configRepo.UpdateConfig(tx, ctx, config.ID, config)
 		if err != nil {
 			return err
 		}
@@ -58,7 +58,7 @@ func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64)
 }
 
 func (s *ConfigService) IsChatActive(ctx context.Context, chatID int64) bool {
-	_, err := s.repo.FindConfigByChatID(ctx, nil, chatID)
+	_, err := s.configRepo.FindConfigByChatID(s.executor.Executor(), ctx, chatID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("ConfigService.IsChatActive: %v", err))
 		return false
@@ -67,7 +67,7 @@ func (s *ConfigService) IsChatActive(ctx context.Context, chatID int64) bool {
 }
 
 func (s *ConfigService) ListNicknames(ctx context.Context, chatID int64) []string {
-	config, err := s.repo.FindConfigByChatID(ctx, nil, chatID)
+	config, err := s.configRepo.FindConfigByChatID(s.executor.Executor(), ctx, chatID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("ConfigService.ListNicknames: %v", err))
 		return nil
@@ -76,7 +76,7 @@ func (s *ConfigService) ListNicknames(ctx context.Context, chatID int64) []strin
 }
 
 func (s *ConfigService) FindSystemPrompt(ctx context.Context, chatID int64) string {
-	config, err := s.repo.FindConfigByChatID(ctx, nil, chatID)
+	config, err := s.configRepo.FindConfigByChatID(s.executor.Executor(), ctx, chatID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("ConfigService.FindSystemPrompt: %v", err))
 		return ""

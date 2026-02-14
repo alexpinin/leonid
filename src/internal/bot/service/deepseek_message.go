@@ -17,18 +17,29 @@ import (
 	"leonid/src/internal/bot/dto"
 	"leonid/src/internal/bot/repo"
 	"leonid/src/internal/db"
-	"leonid/src/internal/logger"
 )
 
-type DeepSeekMessageService struct {
-	db         *db.DB
+type OpenAIMessageService struct {
+	executor   db.QueryExecutor
 	configRepo *repo.ConfigRepo
 	llmClient  openai.Client
 }
 
-func NewDeepSeekMessageService(db *db.DB, cr *repo.ConfigRepo) *DeepSeekMessageService {
-	return &DeepSeekMessageService{
-		db:         db,
+type openAIMessage struct {
+	OfUser      *openai.ChatCompletionUserMessageParam      `json:"ofUser"`
+	OfAssistant *openai.ChatCompletionAssistantMessageParam `json:"ofAssistant"`
+}
+
+type openAIContext struct {
+	Messages []openAIMessage `json:"messages"`
+}
+
+func NewOpenAIMessageService(
+	qe db.QueryExecutor,
+	cr *repo.ConfigRepo,
+) *OpenAIMessageService {
+	return &OpenAIMessageService{
+		executor:   qe,
 		configRepo: cr,
 		llmClient: openai.NewClient(
 			option.WithBaseURL("https://api.deepseek.com"),
@@ -37,72 +48,69 @@ func NewDeepSeekMessageService(db *db.DB, cr *repo.ConfigRepo) *DeepSeekMessageS
 	}
 }
 
-func (s *DeepSeekMessageService) SendMessage(ctx context.Context, b *bot.Bot, chatID int64, message string) {
-	err := s.db.ExecInTx(ctx, func(tx *sql.Tx) error {
-		return s.sendMessage(ctx, b, chatID, message)
-	})
-	if err != nil {
-		logger.Error(fmt.Sprintf("DeepSeekMessageService.SendMessage: %v", err))
-	}
-}
+func (s *OpenAIMessageService) SendMessage(ctx context.Context, b *bot.Bot, chatID int64, message string) error {
+	err := s.executor.ExecuteInTx(func(tx *sql.Tx) error {
+		config, err := s.configRepo.FindConfigByChatID(tx, ctx, chatID)
+		if err != nil {
+			return err
+		}
+		aiContext, err := s.buildOpenAIContext(config, message)
+		if err != nil {
+			return err
+		}
 
-func (s *DeepSeekMessageService) sendMessage(ctx context.Context, b *bot.Bot, chatID int64, message string) error {
-	config, err := s.configRepo.FindConfigByChatID(ctx, nil, chatID)
-	if err != nil {
-		return err
-	}
-	aiContext, err := s.buildOpenAIContext(config, message)
-	if err != nil {
-		return err
-	}
-
-	messages := []openai.ChatCompletionMessageParamUnion{
-		{
-			OfSystem: &openai.ChatCompletionSystemMessageParam{
-				Content: openai.ChatCompletionSystemMessageParamContentUnion{
-					OfString: param.Opt[string]{Value: config.SystemPrompt +
-						fmt.Sprintf(". Your nicknames are: %s", strings.Join(config.Nicknames, ","))},
+		messages := []openai.ChatCompletionMessageParamUnion{
+			{
+				OfSystem: &openai.ChatCompletionSystemMessageParam{
+					Content: openai.ChatCompletionSystemMessageParamContentUnion{
+						OfString: param.Opt[string]{Value: config.SystemPrompt +
+							fmt.Sprintf(". Your nicknames are: %s", strings.Join(config.Nicknames, ","))},
+					},
 				},
 			},
-		},
-	}
-	for _, m := range aiContext.Messages {
-		messages = append(messages, openai.ChatCompletionMessageParamUnion{
-			OfUser:      m.OfUser,
-			OfAssistant: m.OfAssistant,
+		}
+		for _, m := range aiContext.Messages {
+			messages = append(messages, openai.ChatCompletionMessageParamUnion{
+				OfUser:      m.OfUser,
+				OfAssistant: m.OfAssistant,
+			})
+		}
+
+		resp, err := s.llmClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+			Messages: messages,
+			Model:    "deepseek-reasoner",
 		})
-	}
+		if err != nil {
+			return err
+		}
 
-	resp, err := s.llmClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-		Messages: messages,
-		Model:    "deepseek-reasoner",
+		if len(resp.Choices) == 0 {
+			return errors.New(fmt.Sprintf("no ai choices: %v", err))
+		}
+		answer := resp.Choices[0].Message.Content
+
+		config.ConversationContext, err = s.buildConversationContext(aiContext, answer)
+		if err != nil {
+			return err
+		}
+		err = s.configRepo.UpdateConfig(tx, ctx, config.ID, config)
+		if err != nil {
+			return err
+		}
+
+		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   answer,
+		})
+		return nil
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("OpenAIMessageService.SendMessage: %v", err)
 	}
-
-	if len(resp.Choices) == 0 {
-		return errors.New(fmt.Sprintf("no ai choices: %v", err))
-	}
-	answer := resp.Choices[0].Message.Content
-
-	config.ConversationContext, err = s.buildConversationContext(aiContext, answer)
-	if err != nil {
-		return err
-	}
-	err = s.configRepo.UpdateConfig(ctx, nil, config.ID, config)
-	if err != nil {
-		return err
-	}
-
-	_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: chatID,
-		Text:   answer,
-	})
 	return nil
 }
 
-func (_ *DeepSeekMessageService) buildOpenAIContext(config dto.Config, message string) (openAIContext, error) {
+func (_ *OpenAIMessageService) buildOpenAIContext(config dto.Config, message string) (openAIContext, error) {
 	aiContext := openAIContext{}
 	err := json.Unmarshal([]byte(config.ConversationContext), &aiContext)
 	if err != nil {
@@ -124,7 +132,7 @@ func (_ *DeepSeekMessageService) buildOpenAIContext(config dto.Config, message s
 	return aiContext, nil
 }
 
-func (_ *DeepSeekMessageService) buildConversationContext(aiContext openAIContext, message string) (string, error) {
+func (_ *OpenAIMessageService) buildConversationContext(aiContext openAIContext, message string) (string, error) {
 	if len(aiContext.Messages) >= 10 {
 		aiContext.Messages = aiContext.Messages[1:]
 	}

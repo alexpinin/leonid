@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"leonid/src/internal/db"
+	"leonid/src/internal/bot/service"
 	"leonid/testutil"
 )
 
@@ -15,7 +15,11 @@ func init() {
 
 func Test_Handler(t *testing.T) {
 	t.Run("it should use a specific handlers order", func(t *testing.T) {
-		sut := NewBotHandler(&db.DB{})
+		sut := NewBotHandler(
+			&service.ConfigService{},
+			&service.QuotaService{},
+			&service.OpenAIMessageService{},
+		)
 
 		expected := []string{
 			"*handler.inputGuard",

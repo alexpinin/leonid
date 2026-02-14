@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/go-telegram/bot"
+
+	"leonid/src/internal/logger"
 )
 
 type messageSender struct {
@@ -18,10 +20,13 @@ func newMessageSender(ms mSender) *messageSender {
 }
 
 type mSender interface {
-	SendMessage(ctx context.Context, b *bot.Bot, chatID int64, message string)
+	SendMessage(ctx context.Context, b *bot.Bot, chatID int64, message string) error
 }
 
 func (h *messageSender) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
-	h.SendMessage(ctx, b, u.Message.Chat.ID, u.Message.Text)
+	err := h.SendMessage(ctx, b, u.Message.Chat.ID, u.Message.Text)
+	if err != nil {
+		logger.Error(err.Error())
+	}
 	h.nextHandle(ctx, b, u)
 }
