@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"leonid/src/internal/bot/repository"
+	"leonid/src/internal/bot/repo"
 	"leonid/src/internal/logger"
 
 	"github.com/go-telegram/bot"
@@ -14,10 +14,10 @@ import (
 
 type OpenrouterMessageService struct {
 	llmClient  *openrouter.Client
-	configRepo *repository.ConfigRepository
+	configRepo *repo.ConfigRepo
 }
 
-func NewOpenrouterMessageService(cr *repository.ConfigRepository) *OpenrouterMessageService {
+func NewOpenrouterMessageService(cr *repo.ConfigRepo) *OpenrouterMessageService {
 	return &OpenrouterMessageService{
 		llmClient: openrouter.NewClient(
 			os.Getenv("LLM_TOKEN"),

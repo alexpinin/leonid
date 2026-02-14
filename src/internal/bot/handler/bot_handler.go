@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 
-	"leonid/src/internal/bot/repository"
+	"leonid/src/internal/bot/repo"
 	"leonid/src/internal/bot/service"
 	"leonid/src/internal/db"
 
@@ -28,7 +28,7 @@ type BotHandler struct {
 }
 
 func NewBotHandler(db *db.DB) *BotHandler {
-	configRepo := repository.NewConfigRepository(db)
+	configRepo := repo.NewConfigRepo(db)
 	configService := service.NewConfigService(db, configRepo)
 	quotaService := service.NewQuotaService()
 	messageService := service.NewDeepSeekMessageService(db, configRepo)

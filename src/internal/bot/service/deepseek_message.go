@@ -14,18 +14,18 @@ import (
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
 
-	"leonid/src/internal/bot/repository"
+	"leonid/src/internal/bot/repo"
 	"leonid/src/internal/db"
 	"leonid/src/internal/logger"
 )
 
 type DeepSeekMessageService struct {
 	db         *db.DB
-	configRepo *repository.ConfigRepository
+	configRepo *repo.ConfigRepo
 	llmClient  openai.Client
 }
 
-func NewDeepSeekMessageService(db *db.DB, cr *repository.ConfigRepository) *DeepSeekMessageService {
+func NewDeepSeekMessageService(db *db.DB, cr *repo.ConfigRepo) *DeepSeekMessageService {
 	return &DeepSeekMessageService{
 		db:         db,
 		configRepo: cr,
@@ -101,7 +101,7 @@ func (s *DeepSeekMessageService) sendMessage(ctx context.Context, b *bot.Bot, ch
 	return nil
 }
 
-func (_ *DeepSeekMessageService) buildOpenAIContext(config repository.Config, message string) (openAIContext, error) {
+func (_ *DeepSeekMessageService) buildOpenAIContext(config repo.Config, message string) (openAIContext, error) {
 	aiContext := openAIContext{}
 	err := json.Unmarshal([]byte(config.ConversationContext), &aiContext)
 	if err != nil {

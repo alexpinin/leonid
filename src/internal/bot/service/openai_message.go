@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"leonid/src/internal/bot/repository"
+	"leonid/src/internal/bot/repo"
 	"leonid/src/internal/db"
 	"leonid/src/internal/logger"
 
@@ -29,11 +29,11 @@ type openAIContext struct {
 
 type OpenAIMessageService struct {
 	db         *db.DB
-	configRepo *repository.ConfigRepository
+	configRepo *repo.ConfigRepo
 	llmClient  openai.Client
 }
 
-func NewOpenAIMessageService(db *db.DB, cr *repository.ConfigRepository) *OpenAIMessageService {
+func NewOpenAIMessageService(db *db.DB, cr *repo.ConfigRepo) *OpenAIMessageService {
 	return &OpenAIMessageService{
 		db:         db,
 		configRepo: cr,
