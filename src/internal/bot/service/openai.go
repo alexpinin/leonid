@@ -50,7 +50,7 @@ func NewOpenAIService(
 		executor:   qe,
 		configRepo: cr,
 		llmClient: openai.NewClient(
-			//option.WithBaseURL(cfg.BaseURL),
+			option.WithBaseURL(cfg.BaseURL),
 			option.WithAPIKey(cfg.Token),
 		),
 	}
@@ -58,7 +58,7 @@ func NewOpenAIService(
 
 func (s *OpenAIService) SendMessage(ctx context.Context, b *bot.Bot, chatID int64, message string) error {
 	err := s.executor.ExecuteInTx(func(tx *sql.Tx) error {
-		config, err := s.configRepo.FindConfigByChatID(tx, ctx, chatID)
+		config, err := s.configRepo.FindConfigByChatID(tx, ctx, 111)
 		if err != nil {
 			return err
 		}
@@ -93,7 +93,7 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b *bot.Bot, chatID int6
 		}
 
 		if len(resp.Choices) == 0 {
-			return errors.New(fmt.Sprintf("no ai choices: %v", err))
+			return errors.New(fmt.Sprintf("no ai choices"))
 		}
 		answer := resp.Choices[0].Message.Content
 
@@ -113,7 +113,7 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b *bot.Bot, chatID int6
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("OpenAIService.SendMessage: %v", err)
+		return fmt.Errorf("OpenAIService.SendMessage: %w", err)
 	}
 	return nil
 }
