@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"leonid/src/internal/bot/repo"
+	"leonid/src/internal/bot/dto"
 	"leonid/src/internal/db"
 	"leonid/src/internal/logger"
 )
@@ -28,9 +28,9 @@ func NewConfigService(
 }
 
 type configRepo interface {
-	FindConfigByPass(ctx context.Context, tx *sql.Tx, pass string) (repo.Config, error)
-	FindConfigByChatID(ctx context.Context, tx *sql.Tx, chatID int64) (repo.Config, error)
-	UpdateConfig(ctx context.Context, tx *sql.Tx, configID string, c repo.Config) error
+	FindConfigByPass(ctx context.Context, tx *sql.Tx, pass string) (dto.Config, error)
+	FindConfigByChatID(ctx context.Context, tx *sql.Tx, chatID int64) (dto.Config, error)
+	UpdateConfig(ctx context.Context, tx *sql.Tx, configID string, c dto.Config) error
 }
 
 func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64) bool {

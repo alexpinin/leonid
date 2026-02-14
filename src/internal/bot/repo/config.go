@@ -7,20 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"leonid/src/internal/bot/dto"
 	"leonid/src/internal/db"
 )
-
-type Config struct {
-	ID                  string
-	ChatID              int64
-	ChatActivatedAt     time.Time
-	Pass                string
-	PassValidBy         time.Time
-	Nicknames           []string
-	SystemPrompt        string
-	MessagePrompt       string
-	ConversationContext string
-}
 
 type ConfigRepo struct {
 	db *db.DB
@@ -32,7 +21,7 @@ func NewConfigRepo(db *db.DB) *ConfigRepo {
 	}
 }
 
-func (r *ConfigRepo) FindConfigByPass(ctx context.Context, tx *sql.Tx, pass string) (Config, error) {
+func (r *ConfigRepo) FindConfigByPass(ctx context.Context, tx *sql.Tx, pass string) (dto.Config, error) {
 	query := `
 		SELECT
 			id,
@@ -50,12 +39,12 @@ func (r *ConfigRepo) FindConfigByPass(ctx context.Context, tx *sql.Tx, pass stri
 	row := r.db.QueryRowTx(ctx, tx, query, pass)
 	config, err := scanConfig(row)
 	if err != nil {
-		return Config{}, fmt.Errorf("ConfigRepo.FindConfigByPass: %w", err)
+		return dto.Config{}, fmt.Errorf("ConfigRepo.FindConfigByPass: %w", err)
 	}
 	return config, nil
 }
 
-func (r *ConfigRepo) FindConfigByChatID(ctx context.Context, tx *sql.Tx, chatID int64) (Config, error) {
+func (r *ConfigRepo) FindConfigByChatID(ctx context.Context, tx *sql.Tx, chatID int64) (dto.Config, error) {
 	query := `
 		SELECT
 			id,
@@ -73,12 +62,12 @@ func (r *ConfigRepo) FindConfigByChatID(ctx context.Context, tx *sql.Tx, chatID 
 	row := r.db.QueryRowTx(ctx, tx, query, chatID)
 	config, err := scanConfig(row)
 	if err != nil {
-		return Config{}, fmt.Errorf("ConfigRepo.FindConfigByChatID: %w", err)
+		return dto.Config{}, fmt.Errorf("ConfigRepo.FindConfigByChatID: %w", err)
 	}
 	return config, nil
 }
 
-func (r *ConfigRepo) UpdateConfig(ctx context.Context, tx *sql.Tx, configID string, c Config) error {
+func (r *ConfigRepo) UpdateConfig(ctx context.Context, tx *sql.Tx, configID string, c dto.Config) error {
 	const query = `
 		UPDATE config
 		SET chat_id = $2,
@@ -94,8 +83,8 @@ func (r *ConfigRepo) UpdateConfig(ctx context.Context, tx *sql.Tx, configID stri
 	return nil
 }
 
-func scanConfig(r *sql.Row) (Config, error) {
-	var config Config
+func scanConfig(r *sql.Row) (dto.Config, error) {
+	var config dto.Config
 	var passValidByUnix, chatActivatedAt int64
 	var nicknamesStr string
 	err := r.Scan(
@@ -110,7 +99,7 @@ func scanConfig(r *sql.Row) (Config, error) {
 		&config.ConversationContext,
 	)
 	if err != nil {
-		return Config{}, err
+		return dto.Config{}, err
 	}
 	config.PassValidBy = time.Unix(passValidByUnix, 0)
 	config.ChatActivatedAt = time.Unix(chatActivatedAt, 0)
