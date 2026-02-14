@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"testing"
 
-	"leonid/testutil"
-
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+
+	"leonid/src/internal/testutil"
 )
 
 type messageSenderMock struct {

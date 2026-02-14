@@ -28,7 +28,7 @@ type BotHandler struct {
 func NewBotHandler(
 	configService *service.ConfigService,
 	quotaService *service.QuotaService,
-	messageService *service.OpenAIMessageService,
+	messageService *service.OpenAIService,
 ) *BotHandler {
 	handlers := []updateHandler{
 		newInputGuard(),

@@ -1,10 +1,11 @@
 package handler
 
 import (
-	"leonid/testutil"
 	"testing"
 
 	"github.com/go-telegram/bot/models"
+
+	"leonid/src/internal/testutil"
 )
 
 func Test_inputGuard_handle(t *testing.T) {

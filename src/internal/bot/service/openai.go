@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/go-telegram/bot"
@@ -19,10 +18,17 @@ import (
 	"leonid/src/internal/db"
 )
 
-type OpenAIMessageService struct {
+type OpenAIService struct {
+	config     OpenAIConfig
 	executor   db.QueryExecutor
 	configRepo *repo.ConfigRepo
 	llmClient  openai.Client
+}
+
+type OpenAIConfig struct {
+	BaseURL string
+	Token   string
+	Model   string
 }
 
 type openAIMessage struct {
@@ -34,21 +40,23 @@ type openAIContext struct {
 	Messages []openAIMessage `json:"messages"`
 }
 
-func NewOpenAIMessageService(
+func NewOpenAIService(
+	cfg OpenAIConfig,
 	qe db.QueryExecutor,
 	cr *repo.ConfigRepo,
-) *OpenAIMessageService {
-	return &OpenAIMessageService{
+) *OpenAIService {
+	return &OpenAIService{
+		config:     cfg,
 		executor:   qe,
 		configRepo: cr,
 		llmClient: openai.NewClient(
-			option.WithBaseURL("https://api.deepseek.com"),
-			option.WithAPIKey(os.Getenv("DEEPSEEK_LLM_TOKEN")),
+			option.WithBaseURL(cfg.BaseURL),
+			option.WithAPIKey(cfg.Token),
 		),
 	}
 }
 
-func (s *OpenAIMessageService) SendMessage(ctx context.Context, b *bot.Bot, chatID int64, message string) error {
+func (s *OpenAIService) SendMessage(ctx context.Context, b *bot.Bot, chatID int64, message string) error {
 	err := s.executor.ExecuteInTx(func(tx *sql.Tx) error {
 		config, err := s.configRepo.FindConfigByChatID(tx, ctx, chatID)
 		if err != nil {
@@ -78,7 +86,7 @@ func (s *OpenAIMessageService) SendMessage(ctx context.Context, b *bot.Bot, chat
 
 		resp, err := s.llmClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
 			Messages: messages,
-			Model:    "deepseek-reasoner",
+			Model:    s.config.Model,
 		})
 		if err != nil {
 			return err
@@ -105,12 +113,12 @@ func (s *OpenAIMessageService) SendMessage(ctx context.Context, b *bot.Bot, chat
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("OpenAIMessageService.SendMessage: %v", err)
+		return fmt.Errorf("OpenAIService.SendMessage: %v", err)
 	}
 	return nil
 }
 
-func (_ *OpenAIMessageService) buildOpenAIContext(config dto.Config, message string) (openAIContext, error) {
+func (_ *OpenAIService) buildOpenAIContext(config dto.Config, message string) (openAIContext, error) {
 	aiContext := openAIContext{}
 	err := json.Unmarshal([]byte(config.ConversationContext), &aiContext)
 	if err != nil {
@@ -132,7 +140,7 @@ func (_ *OpenAIMessageService) buildOpenAIContext(config dto.Config, message str
 	return aiContext, nil
 }
 
-func (_ *OpenAIMessageService) buildConversationContext(aiContext openAIContext, message string) (string, error) {
+func (_ *OpenAIService) buildConversationContext(aiContext openAIContext, message string) (string, error) {
 	if len(aiContext.Messages) >= 10 {
 		aiContext.Messages = aiContext.Messages[1:]
 	}

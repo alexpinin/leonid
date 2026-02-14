@@ -1,8 +1,9 @@
 package handler
 
 import (
-	"leonid/testutil"
 	"testing"
+
+	"leonid/src/internal/testutil"
 )
 
 func Test_basicHandler_nextHandle(t *testing.T) {

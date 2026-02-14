@@ -7,22 +7,26 @@ import (
 	"os"
 	"os/signal"
 
+	"leonid/src/internal/bot/handler"
 	"leonid/src/internal/bot/repo"
 	"leonid/src/internal/bot/service"
 	"leonid/src/internal/db"
-	"leonid/src/internal/logger"
-
-	"leonid/src/internal/bot/handler"
 
 	"github.com/go-telegram/bot"
 )
 
-var (
-	botToken = os.Getenv("BOT_TOKEN")
-)
+type Config struct {
+	BotToken    string
+	LLMProvider string
+	LLMToken    string
+	LLMModel    string
+}
 
-func Start(database *sql.DB) error {
-	logger.Info(fmt.Sprintf("Starting bot"))
+func Start(database *sql.DB, cfg Config) error {
+	url, err := baseURL(cfg.LLMProvider)
+	if err != nil {
+		return err
+	}
 
 	executor := db.NewAppQueryExecutor(database)
 
@@ -30,7 +34,11 @@ func Start(database *sql.DB) error {
 
 	configService := service.NewConfigService(executor, configRepo)
 	quotaService := service.NewQuotaService()
-	messageService := service.NewOpenAIMessageService(executor, configRepo)
+	messageService := service.NewOpenAIService(service.OpenAIConfig{
+		BaseURL: url,
+		Token:   cfg.LLMToken,
+		Model:   cfg.LLMModel,
+	}, executor, configRepo)
 
 	botHandler := handler.NewBotHandler(
 		configService,
@@ -48,11 +56,22 @@ func Start(database *sql.DB) error {
 		}),
 	}
 
-	b, err := bot.New(botToken, opts...)
+	b, err := bot.New(cfg.BotToken, opts...)
 	if err != nil {
 		return err
 	}
 
 	b.Start(ctx)
 	return nil
+}
+
+func baseURL(provider string) (string, error) {
+	switch provider {
+	case "openai":
+		return "", nil // default
+	case "deepseek":
+		return "https://api.deepseek.com", nil
+	default:
+		return "", fmt.Errorf("unknown LLM provider")
+	}
 }

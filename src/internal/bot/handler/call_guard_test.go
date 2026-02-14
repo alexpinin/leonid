@@ -3,10 +3,11 @@ package handler
 import (
 	"context"
 	"fmt"
-	"leonid/testutil"
 	"testing"
 
 	"github.com/go-telegram/bot/models"
+
+	"leonid/src/internal/testutil"
 )
 
 type nicknameProviderMock struct {

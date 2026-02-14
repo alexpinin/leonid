@@ -2,10 +2,11 @@ package handler
 
 import (
 	"fmt"
-	"leonid/testutil"
 	"testing"
 
 	"github.com/go-telegram/bot/models"
+
+	"leonid/src/internal/testutil"
 )
 
 type quotaManagerMock struct {

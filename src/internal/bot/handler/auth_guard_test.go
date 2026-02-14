@@ -1,8 +1,9 @@
 package handler
 
 import (
-	"leonid/testutil"
 	"testing"
+
+	"leonid/src/internal/testutil"
 )
 
 func Test_authGuard_handle(t *testing.T) {

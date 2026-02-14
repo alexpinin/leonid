@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"leonid/src/internal/bot/service"
-	"leonid/testutil"
+	"leonid/src/internal/testutil"
 )
 
 func init() {
@@ -18,7 +18,7 @@ func Test_Handler(t *testing.T) {
 		sut := NewBotHandler(
 			&service.ConfigService{},
 			&service.QuotaService{},
-			&service.OpenAIMessageService{},
+			&service.OpenAIService{},
 		)
 
 		expected := []string{
