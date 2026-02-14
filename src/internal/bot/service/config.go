@@ -5,10 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"leonid/src/internal/bot/repository"
-	"leonid/src/internal/common/db"
-	"leonid/src/internal/common/logger"
 	"time"
+
+	"leonid/src/internal/bot/repository"
+	"leonid/src/internal/db"
+	"leonid/src/internal/logger"
 )
 
 type ConfigService struct {

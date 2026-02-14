@@ -6,10 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"leonid/src/internal/bot/repository"
-	"leonid/src/internal/common/db"
-	"leonid/src/internal/common/logger"
 	"os"
+
+	"leonid/src/internal/bot/repository"
+	"leonid/src/internal/db"
+	"leonid/src/internal/logger"
 
 	"github.com/go-telegram/bot"
 	"github.com/openai/openai-go"

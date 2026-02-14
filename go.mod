@@ -1,12 +1,11 @@
 module leonid
 
-go 1.24.3
+go 1.25.5
 
 require (
 	github.com/go-telegram/bot v1.15.0
 	github.com/openai/openai-go v1.2.1
 	github.com/revrost/go-openrouter v0.1.0
-	go.uber.org/zap v1.27.0
 	modernc.org/sqlite v1.37.1
 )
 
@@ -22,7 +21,6 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
-	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	modernc.org/libc v1.65.7 // indirect

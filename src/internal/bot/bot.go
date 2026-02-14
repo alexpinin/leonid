@@ -3,11 +3,13 @@ package bot
 import (
 	"context"
 	"fmt"
-	"leonid/src/internal/common/logger"
-
-	"leonid/src/internal/bot/handler"
 	"os"
 	"os/signal"
+
+	"leonid/src/internal/db"
+	"leonid/src/internal/logger"
+
+	"leonid/src/internal/bot/handler"
 
 	"github.com/go-telegram/bot"
 )
@@ -16,10 +18,10 @@ var (
 	botToken = os.Getenv("BOT_TOKEN")
 )
 
-func Start() {
+func Start(database *db.DB) error {
 	logger.Info(fmt.Sprintf("Starting bot"))
 
-	h := handler.NewBotHandler()
+	h := handler.NewBotHandler(database)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
@@ -33,9 +35,9 @@ func Start() {
 
 	b, err := bot.New(botToken, opts...)
 	if err != nil {
-		logger.Panic(err.Error())
-		return
+		return err
 	}
 
 	b.Start(ctx)
+	return nil
 }

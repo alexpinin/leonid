@@ -2,9 +2,10 @@ package handler
 
 import (
 	"context"
+
 	"leonid/src/internal/bot/repository"
 	"leonid/src/internal/bot/service"
-	"leonid/src/internal/common/db"
+	"leonid/src/internal/db"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -26,12 +27,11 @@ type BotHandler struct {
 	handlerHead updateHandler
 }
 
-func NewBotHandler() *BotHandler {
-	database := db.NewDB()
-	configRepo := repository.NewConfigRepository(database)
-	configService := service.NewConfigService(database, configRepo)
+func NewBotHandler(db *db.DB) *BotHandler {
+	configRepo := repository.NewConfigRepository(db)
+	configService := service.NewConfigService(db, configRepo)
 	quotaService := service.NewQuotaService()
-	messageService := service.NewDeepSeekMessageService(database, configRepo)
+	messageService := service.NewDeepSeekMessageService(db, configRepo)
 
 	handlers := []updateHandler{
 		newInputGuard(),

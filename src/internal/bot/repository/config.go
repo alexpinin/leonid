@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"leonid/src/internal/common/db"
 	"strings"
 	"time"
+
+	"leonid/src/internal/db"
 )
 
 type Config struct {

@@ -3,9 +3,10 @@ package service
 import (
 	"context"
 	"fmt"
-	"leonid/src/internal/bot/repository"
-	"leonid/src/internal/common/logger"
 	"os"
+
+	"leonid/src/internal/bot/repository"
+	"leonid/src/internal/logger"
 
 	"github.com/go-telegram/bot"
 	"github.com/revrost/go-openrouter"

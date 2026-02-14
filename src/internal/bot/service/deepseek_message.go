@@ -13,9 +13,10 @@ import (
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
+
 	"leonid/src/internal/bot/repository"
-	"leonid/src/internal/common/db"
-	"leonid/src/internal/common/logger"
+	"leonid/src/internal/db"
+	"leonid/src/internal/logger"
 )
 
 type DeepSeekMessageService struct {
