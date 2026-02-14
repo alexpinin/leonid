@@ -50,7 +50,7 @@ func NewOpenAIService(
 		executor:   qe,
 		configRepo: cr,
 		llmClient: openai.NewClient(
-			option.WithBaseURL(cfg.BaseURL),
+			//option.WithBaseURL(cfg.BaseURL),
 			option.WithAPIKey(cfg.Token),
 		),
 	}

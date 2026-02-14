@@ -68,7 +68,7 @@ func Start(database *sql.DB, cfg Config) error {
 func baseURL(provider string) (string, error) {
 	switch provider {
 	case "openai":
-		return "", nil // default
+		return "https://api.openai.com/v1/", nil
 	case "deepseek":
 		return "https://api.deepseek.com", nil
 	default:
