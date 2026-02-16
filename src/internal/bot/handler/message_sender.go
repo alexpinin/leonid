@@ -2,10 +2,9 @@ package handler
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-telegram/bot"
-
-	"leonid/src/internal/logger"
 )
 
 type messageSender struct {
@@ -23,10 +22,10 @@ type mSender interface {
 	SendMessage(ctx context.Context, b *bot.Bot, chatID int64, message string) error
 }
 
-func (h *messageSender) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
+func (h *messageSender) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) error {
 	err := h.SendMessage(ctx, b, u.Message.Chat.ID, u.Message.Text)
 	if err != nil {
-		logger.Error(err.Error())
+		return fmt.Errorf("messageSender.handle: %v", err)
 	}
-	h.nextHandle(ctx, b, u)
+	return h.nextHandle(ctx, b, u)
 }

@@ -38,7 +38,7 @@ func Test_authGuard_handle(t *testing.T) {
 			sut := newAuthGuard()
 			sut.setNext(&mockHandler{runLog: &runLog})
 
-			sut.handle(nil, nil, tc.given)
+			_ = sut.handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

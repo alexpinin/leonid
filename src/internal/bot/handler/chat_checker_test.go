@@ -11,13 +11,14 @@ import (
 )
 
 type chatCheckerStorageMock struct {
-	runLog *[]string
-	result bool
+	runLog          *[]string
+	isChatActiveRes bool
+	isChatActiveErr error
 }
 
-func (m *chatCheckerStorageMock) IsChatActive(_ context.Context, chatID int64) bool {
+func (m *chatCheckerStorageMock) IsChatActive(_ context.Context, chatID int64) (bool, error) {
 	*m.runLog = append(*m.runLog, fmt.Sprintf("IsChatActive: %d", chatID))
-	return m.result
+	return m.isChatActiveRes, m.isChatActiveErr
 }
 
 func Test_chatChecker_handle(t *testing.T) {
@@ -34,7 +35,7 @@ func Test_chatChecker_handle(t *testing.T) {
 	}{
 		{
 			description: "should set IsChatActive from the IsChatActive function result and call next handler",
-			storage:     chatCheckerStorageMock{result: true},
+			storage:     chatCheckerStorageMock{isChatActiveRes: true},
 			given:       &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"IsChatActive: 123",
@@ -49,7 +50,7 @@ func Test_chatChecker_handle(t *testing.T) {
 			moc := NewChatChecker(&tc.storage)
 			moc.setNext(&mockHandler{runLog: &runLog})
 
-			moc.handle(nil, nil, tc.given)
+			_ = moc.handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

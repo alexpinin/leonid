@@ -18,9 +18,9 @@ func (h *basicHandler) getNext() updateHandler {
 	return h.next
 }
 
-func (h *basicHandler) nextHandle(c context.Context, b *bot.Bot, u *UpdateContext) {
+func (h *basicHandler) nextHandle(c context.Context, b *bot.Bot, u *UpdateContext) error {
 	if h.next == nil {
-		return
+		return nil
 	}
-	h.next.handle(c, b, u)
+	return h.next.handle(c, b, u)
 }

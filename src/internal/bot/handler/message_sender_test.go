@@ -50,7 +50,7 @@ func Test_messageSender_handle(t *testing.T) {
 			sut := newMessageSender(&tc.messageSender)
 			sut.setNext(&mockHandler{runLog: &runLog})
 
-			sut.handle(nil, nil, tc.given)
+			_ = sut.handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

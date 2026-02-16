@@ -160,7 +160,7 @@ func Test_callGuard_handle(t *testing.T) {
 			sut := newCallGuard(&tc.nicknameProvider)
 			sut.setNext(&mockHandler{runLog: &runLog})
 
-			sut.handle(nil, nil, tc.given)
+			_ = sut.handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

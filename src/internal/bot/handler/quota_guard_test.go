@@ -58,7 +58,7 @@ func Test_quotaGuard_handle(t *testing.T) {
 			moc := newQuotaGuard(tc.quotaManager)
 			moc.setNext(&mockHandler{runLog: &runLog})
 
-			moc.handle(nil, nil, tc.given)
+			_ = moc.handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

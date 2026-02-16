@@ -60,7 +60,7 @@ func Test_chatActivator_handle(t *testing.T) {
 			moc := newChatActivator(&tc.chatActivator)
 			moc.setNext(&mockHandler{runLog: &runLog})
 
-			moc.handle(nil, nil, tc.given)
+			_ = moc.handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

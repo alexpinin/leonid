@@ -55,7 +55,7 @@ func Test_inputGuard_handle(t *testing.T) {
 			sut := &inputGuard{}
 			sut.setNext(&mockHandler{runLog: &runLog})
 
-			sut.handle(nil, nil, tc.given)
+			_ = sut.handle(nil, nil, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})

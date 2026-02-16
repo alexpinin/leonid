@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	"github.com/go-telegram/bot"
-
-	"leonid/src/internal/logger"
 )
 
 type chatChecker struct {
@@ -24,12 +22,12 @@ type chChecker interface {
 	IsChatActive(ctx context.Context, chatID int64) (bool, error)
 }
 
-func (h *chatChecker) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
+func (h *chatChecker) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) error {
 	isChatActive, err := h.IsChatActive(ctx, u.Message.Chat.ID)
 	if err != nil {
-		logger.Error(fmt.Sprintf("ChatChecker.handle: %v", err))
+		return fmt.Errorf("chatChecker.handle: %v", err)
 	}
 	u.IsChatActive = isChatActive
 
-	h.nextHandle(ctx, b, u)
+	return h.nextHandle(ctx, b, u)
 }

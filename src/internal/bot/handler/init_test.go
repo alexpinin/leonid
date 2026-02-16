@@ -12,8 +12,9 @@ type mockHandler struct {
 	runLog *[]string
 }
 
-func (m *mockHandler) handle(_ context.Context, _ *bot.Bot, uc *UpdateContext) {
+func (m *mockHandler) handle(_ context.Context, _ *bot.Bot, uc *UpdateContext) error {
 	*m.runLog = append(*m.runLog, fmt.Sprintf("handle: %s", testUpdateToStr(uc)))
+	return nil
 }
 
 func (m *mockHandler) setNext(updateHandler) {

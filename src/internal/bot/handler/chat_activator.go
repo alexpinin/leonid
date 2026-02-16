@@ -21,11 +21,10 @@ type chActivator interface {
 	Activate(context.Context, string, int64) bool
 }
 
-func (h *chatActivator) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
+func (h *chatActivator) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) error {
 	if u.IsChatActive {
-		h.nextHandle(ctx, b, u)
-		return
+		return h.nextHandle(ctx, b, u)
 	}
 	u.IsPassActive = h.Activate(ctx, u.Message.Text, u.Message.Chat.ID)
-	h.nextHandle(ctx, b, u)
+	return h.nextHandle(ctx, b, u)
 }

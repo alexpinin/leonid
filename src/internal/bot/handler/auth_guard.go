@@ -14,9 +14,9 @@ func newAuthGuard() *authGuard {
 	return &authGuard{}
 }
 
-func (h *authGuard) handle(c context.Context, b *bot.Bot, u *UpdateContext) {
+func (h *authGuard) handle(c context.Context, b *bot.Bot, u *UpdateContext) error {
 	if !u.IsChatActive && !u.IsPassActive {
-		return
+		return nil
 	}
-	h.nextHandle(c, b, u)
+	return h.nextHandle(c, b, u)
 }

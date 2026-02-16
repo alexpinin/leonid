@@ -20,23 +20,22 @@ type nicknameProvider interface {
 	ListNicknames(ctx context.Context, chatID int64) []string
 }
 
-func (h *callGuard) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
+func (h *callGuard) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) error {
 	nicknames := h.ListNicknames(ctx, u.Message.Chat.ID)
 	message := strings.ToLower(u.Message.Text)
 	for _, nickname := range nicknames {
 		if nickname != "" && strings.Contains(message, nickname) {
-			h.nextHandle(ctx, b, u)
-			return
+			return h.nextHandle(ctx, b, u)
 		}
 	}
 	if u.Message.ReplyToMessage == nil || u.Message.ReplyToMessage.From == nil {
-		return
+		return nil
 	}
 	replyToNickname := strings.ToLower(u.Message.ReplyToMessage.From.FirstName)
 	for _, nickname := range nicknames {
 		if nickname == replyToNickname {
-			h.nextHandle(ctx, b, u)
-			return
+			return h.nextHandle(ctx, b, u)
 		}
 	}
+	return nil
 }

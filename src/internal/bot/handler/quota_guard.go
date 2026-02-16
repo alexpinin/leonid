@@ -21,9 +21,9 @@ type quotaManager interface {
 	UseChatQuota(chatID int64) bool
 }
 
-func (h *quotaGuard) handle(c context.Context, b *bot.Bot, u *UpdateContext) {
+func (h *quotaGuard) handle(c context.Context, b *bot.Bot, u *UpdateContext) error {
 	if !h.UseChatQuota(u.Message.Chat.ID) {
-		return
+		return nil
 	}
-	h.nextHandle(c, b, u)
+	return h.nextHandle(c, b, u)
 }
