@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/go-telegram/bot"
@@ -24,7 +26,7 @@ type chChecker interface {
 
 func (h *chatChecker) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) error {
 	isChatActive, err := h.IsChatActive(ctx, u.Message.Chat.ID)
-	if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("chatChecker.handle: %w", err)
 	}
 	u.IsChatActive = isChatActive
