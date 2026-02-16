@@ -53,6 +53,9 @@ func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64)
 
 		return nil
 	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil // not a valid pass, but not an error
+	}
 	if err != nil {
 		return false, fmt.Errorf("ConfigService.Activate: %w", err)
 	}
@@ -61,6 +64,9 @@ func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64)
 
 func (s *ConfigService) IsChatActive(ctx context.Context, chatID int64) (bool, error) {
 	config, err := s.configRepo.FindConfigByChatID(s.executor.Executor(), ctx, chatID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
 	if err != nil {
 		return false, fmt.Errorf("ConfigService.IsChatActive: %w", err)
 	}
