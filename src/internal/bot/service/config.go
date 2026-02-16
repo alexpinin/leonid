@@ -57,13 +57,13 @@ func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64)
 	return true
 }
 
-func (s *ConfigService) IsChatActive(ctx context.Context, chatID int64) bool {
-	_, err := s.configRepo.FindConfigByChatID(s.executor.Executor(), ctx, chatID)
+func (s *ConfigService) IsChatActive(ctx context.Context, chatID int64) (bool, error) {
+	config, err := s.configRepo.FindConfigByChatID(s.executor.Executor(), ctx, chatID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("ConfigService.IsChatActive: %v", err))
-		return false
+		return false, err
 	}
-	return true
+	return config.ChatActivatedAt.After(time.Time{}), nil
 }
 
 func (s *ConfigService) ListNicknames(ctx context.Context, chatID int64) []string {

@@ -2,8 +2,11 @@ package handler
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-telegram/bot"
+
+	"leonid/src/internal/logger"
 )
 
 type chatChecker struct {
@@ -18,10 +21,15 @@ func NewChatChecker(ch chChecker) *chatChecker {
 }
 
 type chChecker interface {
-	IsChatActive(ctx context.Context, chatID int64) bool
+	IsChatActive(ctx context.Context, chatID int64) (bool, error)
 }
 
 func (h *chatChecker) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) {
-	u.IsChatActive = h.IsChatActive(ctx, u.Message.Chat.ID)
+	isChatActive, err := h.IsChatActive(ctx, u.Message.Chat.ID)
+	if err != nil {
+		logger.Error(fmt.Sprintf("ChatChecker.handle: %v", err))
+	}
+	u.IsChatActive = isChatActive
+
 	h.nextHandle(ctx, b, u)
 }
