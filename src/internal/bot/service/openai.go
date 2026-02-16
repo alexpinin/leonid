@@ -58,46 +58,34 @@ func NewOpenAIService(
 
 func (s *OpenAIService) SendMessage(ctx context.Context, b *bot.Bot, chatID int64, message string) error {
 	err := s.executor.ExecuteInTx(func(tx *sql.Tx) error {
-		config, err := s.configRepo.FindConfigByChatID(tx, ctx, 111)
+
+		config, err := s.configRepo.FindConfigByChatID(tx, ctx, chatID)
 		if err != nil {
-			return err
-		}
-		aiContext, err := s.buildOpenAIContext(config, message)
-		if err != nil {
-			return err
+			return fmt.Errorf("cannot find config: %w", err)
 		}
 
-		messages := []openai.ChatCompletionMessageParamUnion{
-			{
-				OfSystem: &openai.ChatCompletionSystemMessageParam{
-					Content: openai.ChatCompletionSystemMessageParamContentUnion{
-						OfString: param.Opt[string]{Value: config.SystemPrompt +
-							fmt.Sprintf(". Your nicknames are: %s", strings.Join(config.Nicknames, ","))},
-					},
-				},
-			},
-		}
-		for _, m := range aiContext.Messages {
-			messages = append(messages, openai.ChatCompletionMessageParamUnion{
-				OfUser:      m.OfUser,
-				OfAssistant: m.OfAssistant,
-			})
+		aiContext, err := s.buildAIContext(config, message)
+		if err != nil {
+			return fmt.Errorf("cannot build openai context: %w", err)
 		}
 
-		resp, err := s.llmClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-			Messages: messages,
+		prompt := s.buildPrompt(config, aiContext)
+
+		completion, err := s.llmClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+			Messages: prompt,
 			Model:    s.config.Model,
 		})
 		if err != nil {
-			return err
+			return fmt.Errorf("cannot get LLM response: %w", err)
 		}
 
-		if len(resp.Choices) == 0 {
+		if len(completion.Choices) == 0 {
 			return errors.New(fmt.Sprintf("no ai choices"))
 		}
-		answer := resp.Choices[0].Message.Content
 
-		config.ConversationContext, err = s.buildConversationContext(aiContext, answer)
+		response := completion.Choices[0].Message.Content
+
+		config.ConversationContext, err = s.buildConversationContext(aiContext, response)
 		if err != nil {
 			return err
 		}
@@ -106,10 +94,13 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b *bot.Bot, chatID int6
 			return err
 		}
 
-		_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
-			Text:   answer,
+			Text:   response,
 		})
+		if err != nil {
+			return fmt.Errorf("cannot send Telegram message: %w", err)
+		}
 		return nil
 	})
 	if err != nil {
@@ -118,7 +109,7 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b *bot.Bot, chatID int6
 	return nil
 }
 
-func (_ *OpenAIService) buildOpenAIContext(config dto.Config, message string) (openAIContext, error) {
+func (_ *OpenAIService) buildAIContext(config dto.Config, message string) (openAIContext, error) {
 	aiContext := openAIContext{}
 	err := json.Unmarshal([]byte(config.ConversationContext), &aiContext)
 	if err != nil {
@@ -138,6 +129,31 @@ func (_ *OpenAIService) buildOpenAIContext(config dto.Config, message string) (o
 	})
 
 	return aiContext, nil
+}
+
+func (_ *OpenAIService) buildPrompt(cfg dto.Config, ctx openAIContext) []openai.ChatCompletionMessageParamUnion {
+	prompt := fmt.Sprintf("%s. Your nicknames are: %s", cfg.SystemPrompt, strings.Join(cfg.Nicknames, ","))
+
+	messages := []openai.ChatCompletionMessageParamUnion{
+		{
+			OfSystem: &openai.ChatCompletionSystemMessageParam{
+				Content: openai.ChatCompletionSystemMessageParamContentUnion{
+					OfString: param.Opt[string]{
+						Value: prompt,
+					},
+				},
+			},
+		},
+	}
+
+	for _, m := range ctx.Messages {
+		messages = append(messages, openai.ChatCompletionMessageParamUnion{
+			OfUser:      m.OfUser,
+			OfAssistant: m.OfAssistant,
+		})
+	}
+
+	return messages
 }
 
 func (_ *OpenAIService) buildConversationContext(aiContext openAIContext, message string) (string, error) {
