@@ -73,18 +73,18 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b *bot.Bot, chatID int6
 			return fmt.Errorf("cannot get LLM response: %w", err)
 		}
 		if len(completion.Choices) == 0 {
-			return errors.New(fmt.Sprintf("no ai choices"))
+			return errors.New("no ai choices")
 		}
 
 		response := completion.Choices[0].Message.Content
 		config.ConversationHistory, err = s.historyToPersist(history, response)
 		if err != nil {
-			return errors.New(fmt.Sprintf("cannot convert history to persist"))
+			return fmt.Errorf("cannot convert history to persist: %w", err)
 		}
 
 		err = s.configRepo.UpdateConfig(tx, ctx, config.ID, config)
 		if err != nil {
-			return errors.New(fmt.Sprintf("cannot update config"))
+			return fmt.Errorf("cannot update config: %w", err)
 		}
 
 		telegramParams := bot.SendMessageParams{
