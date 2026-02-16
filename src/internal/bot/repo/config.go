@@ -73,7 +73,7 @@ func (r *ConfigRepo) UpdateConfig(ex db.Executor, ctx context.Context, configID 
 		WHERE id = $1
 	`
 	_, err := ex.ExecContext(ctx, query,
-		configID, c.ChatID, c.ChatActivatedAt.Unix(), c.ConversationContext)
+		configID, c.ChatID, c.ChatActivatedAt.Unix(), c.ConversationHistory)
 	if err != nil {
 		return fmt.Errorf("ConfigRepo.UpdateConfig: %w", err)
 	}
@@ -93,7 +93,7 @@ func scanConfig(r *sql.Row) (dto.Config, error) {
 		&nicknamesStr,
 		&config.SystemPrompt,
 		&config.MessagePrompt,
-		&config.ConversationContext,
+		&config.ConversationHistory,
 	)
 	if err != nil {
 		return dto.Config{}, err

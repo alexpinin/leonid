@@ -31,15 +31,6 @@ type OpenAIConfig struct {
 	Model   string
 }
 
-type openAIMessage struct {
-	OfUser      *openai.ChatCompletionUserMessageParam      `json:"ofUser"`
-	OfAssistant *openai.ChatCompletionAssistantMessageParam `json:"ofAssistant"`
-}
-
-type openAIContext struct {
-	Messages []openAIMessage `json:"messages"`
-}
-
 func NewOpenAIService(
 	cfg OpenAIConfig,
 	qe db.QueryExecutor,
@@ -64,12 +55,12 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b *bot.Bot, chatID int6
 			return fmt.Errorf("cannot find config: %w", err)
 		}
 
-		aiContext, err := s.buildAIContext(config, message)
+		history, err := s.conversationHistory(config, message)
 		if err != nil {
 			return fmt.Errorf("cannot build openai context: %w", err)
 		}
 
-		prompt := s.buildPrompt(config, aiContext)
+		prompt := s.buildPrompt(config, history)
 
 		completion, err := s.llmClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
 			Messages: prompt,
@@ -85,7 +76,7 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b *bot.Bot, chatID int6
 
 		response := completion.Choices[0].Message.Content
 
-		config.ConversationContext, err = s.buildConversationContext(aiContext, response)
+		config.ConversationHistory, err = s.historyToPersist(history, response)
 		if err != nil {
 			return err
 		}
@@ -109,18 +100,18 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b *bot.Bot, chatID int6
 	return nil
 }
 
-func (_ *OpenAIService) buildAIContext(config dto.Config, message string) (openAIContext, error) {
-	aiContext := openAIContext{}
-	err := json.Unmarshal([]byte(config.ConversationContext), &aiContext)
+func (_ *OpenAIService) conversationHistory(config dto.Config, message string) (dto.OpenAIConversationHistory, error) {
+	history := dto.OpenAIConversationHistory{}
+	err := json.Unmarshal([]byte(config.ConversationHistory), &history)
 	if err != nil {
-		return openAIContext{}, err
+		return dto.OpenAIConversationHistory{}, err
 	}
 
-	if len(aiContext.Messages) >= 10 {
-		aiContext.Messages = aiContext.Messages[1:]
+	if len(history.Messages) >= 10 {
+		history.Messages = history.Messages[1:]
 	}
 
-	aiContext.Messages = append(aiContext.Messages, openAIMessage{
+	history.Messages = append(history.Messages, dto.OpenAIConversationMessage{
 		OfUser: &openai.ChatCompletionUserMessageParam{
 			Content: openai.ChatCompletionUserMessageParamContentUnion{
 				OfString: param.Opt[string]{Value: message + fmt.Sprintf(". %s", config.MessagePrompt)},
@@ -128,11 +119,12 @@ func (_ *OpenAIService) buildAIContext(config dto.Config, message string) (openA
 		},
 	})
 
-	return aiContext, nil
+	return history, nil
 }
 
-func (_ *OpenAIService) buildPrompt(cfg dto.Config, ctx openAIContext) []openai.ChatCompletionMessageParamUnion {
-	prompt := fmt.Sprintf("%s. Your nicknames are: %s", cfg.SystemPrompt, strings.Join(cfg.Nicknames, ","))
+func (_ *OpenAIService) buildPrompt(config dto.Config, history dto.OpenAIConversationHistory) []openai.ChatCompletionMessageParamUnion {
+	prompt := fmt.Sprintf("%s. Your nicknames are: %s",
+		config.SystemPrompt, strings.Join(config.Nicknames, ","))
 
 	messages := []openai.ChatCompletionMessageParamUnion{
 		{
@@ -146,7 +138,7 @@ func (_ *OpenAIService) buildPrompt(cfg dto.Config, ctx openAIContext) []openai.
 		},
 	}
 
-	for _, m := range ctx.Messages {
+	for _, m := range history.Messages {
 		messages = append(messages, openai.ChatCompletionMessageParamUnion{
 			OfUser:      m.OfUser,
 			OfAssistant: m.OfAssistant,
@@ -156,17 +148,23 @@ func (_ *OpenAIService) buildPrompt(cfg dto.Config, ctx openAIContext) []openai.
 	return messages
 }
 
-func (_ *OpenAIService) buildConversationContext(aiContext openAIContext, message string) (string, error) {
-	if len(aiContext.Messages) >= 10 {
-		aiContext.Messages = aiContext.Messages[1:]
+func (_ *OpenAIService) historyToPersist(history dto.OpenAIConversationHistory, message string) (string, error) {
+	if len(history.Messages) >= 10 {
+		history.Messages = history.Messages[1:]
 	}
-	aiContext.Messages = append(aiContext.Messages, openAIMessage{
+
+	history.Messages = append(history.Messages, dto.OpenAIConversationMessage{
 		OfAssistant: &openai.ChatCompletionAssistantMessageParam{
 			Content: openai.ChatCompletionAssistantMessageParamContentUnion{
 				OfString: param.Opt[string]{Value: message},
 			},
 		},
 	})
-	conversationContext, err := json.Marshal(aiContext)
-	return string(conversationContext), err
+
+	conversationContext, err := json.Marshal(history)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal conversation history: %w", err)
+	}
+
+	return string(conversationContext), nil
 }

@@ -1,6 +1,10 @@
 package dto
 
-import "time"
+import (
+	"time"
+
+	"github.com/openai/openai-go"
+)
 
 type Config struct {
 	ID                  string
@@ -11,5 +15,14 @@ type Config struct {
 	Nicknames           []string
 	SystemPrompt        string
 	MessagePrompt       string
-	ConversationContext string
+	ConversationHistory string
+}
+
+type OpenAIConversationMessage struct {
+	OfUser      *openai.ChatCompletionUserMessageParam      `json:"ofUser"`
+	OfAssistant *openai.ChatCompletionAssistantMessageParam `json:"ofAssistant"`
+}
+
+type OpenAIConversationHistory struct {
+	Messages []OpenAIConversationMessage `json:"messages"`
 }
