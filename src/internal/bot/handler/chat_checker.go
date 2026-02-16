@@ -25,7 +25,7 @@ type chChecker interface {
 func (h *chatChecker) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) error {
 	isChatActive, err := h.IsChatActive(ctx, u.Message.Chat.ID)
 	if err != nil {
-		return fmt.Errorf("chatChecker.handle: %v", err)
+		return fmt.Errorf("chatChecker.handle: %w", err)
 	}
 	u.IsChatActive = isChatActive
 

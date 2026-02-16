@@ -25,7 +25,7 @@ type mSender interface {
 func (h *messageSender) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) error {
 	err := h.SendMessage(ctx, b, u.Message.Chat.ID, u.Message.Text)
 	if err != nil {
-		return fmt.Errorf("messageSender.handle: %v", err)
+		return fmt.Errorf("messageSender.handle: %w", err)
 	}
 	return h.nextHandle(ctx, b, u)
 }

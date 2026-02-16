@@ -11,13 +11,14 @@ import (
 )
 
 type chatActivatorMock struct {
-	runLog *[]string
-	result bool
+	runLog      *[]string
+	activateRes bool
+	activateErr error
 }
 
-func (m *chatActivatorMock) Activate(_ context.Context, pass string, chatID int64) bool {
+func (m *chatActivatorMock) Activate(_ context.Context, pass string, chatID int64) (bool, error) {
 	*m.runLog = append(*m.runLog, fmt.Sprintf("Activate: %s, %d", pass, chatID))
-	return m.result
+	return m.activateRes, m.activateErr
 }
 
 func Test_chatActivator_handle(t *testing.T) {
@@ -45,7 +46,7 @@ func Test_chatActivator_handle(t *testing.T) {
 		},
 		{
 			description:   "it should set IsPassActive from Activate function result and call next handler",
-			chatActivator: chatActivatorMock{result: true},
+			chatActivator: chatActivatorMock{activateRes: true},
 			given:         &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"Activate: pass, 123",
