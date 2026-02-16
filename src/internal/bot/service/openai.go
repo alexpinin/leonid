@@ -14,14 +14,13 @@ import (
 	"github.com/openai/openai-go/packages/param"
 
 	"leonid/src/internal/bot/dto"
-	"leonid/src/internal/bot/repo"
 	"leonid/src/internal/db"
 )
 
 type OpenAIService struct {
 	config     OpenAIConfig
 	executor   db.QueryExecutor
-	configRepo *repo.ConfigRepo
+	configRepo configRepo
 	llmClient  openai.Client
 }
 
@@ -31,10 +30,15 @@ type OpenAIConfig struct {
 	Model   string
 }
 
+type configRepo interface {
+	FindConfigByChatID(db.Executor, context.Context, int64) (dto.Config, error)
+	UpdateConfig(db.Executor, context.Context, string, dto.Config) error
+}
+
 func NewOpenAIService(
 	cfg OpenAIConfig,
 	qe db.QueryExecutor,
-	cr *repo.ConfigRepo,
+	cr configRepo,
 ) *OpenAIService {
 	return &OpenAIService{
 		config:     cfg,

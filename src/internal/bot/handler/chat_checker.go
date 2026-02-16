@@ -12,7 +12,7 @@ type chatChecker struct {
 	chChecker
 }
 
-func NewChatChecker(ch chChecker) *chatChecker {
+func newChatChecker(ch chChecker) *chatChecker {
 	return &chatChecker{
 		chChecker: ch,
 	}

@@ -33,7 +33,7 @@ func NewBotHandler(
 ) *BotHandler {
 	handlers := []updateHandler{
 		newInputGuard(),
-		NewChatChecker(configService),
+		newChatChecker(configService),
 		newChatActivator(configService),
 		newAuthGuard(),
 		newCallGuard(configService),

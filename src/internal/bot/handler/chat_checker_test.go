@@ -36,7 +36,7 @@ func TestChatCheckerHandle(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			runLog := make([]string, 0)
 			tc.storage.runLog = &runLog
-			moc := NewChatChecker(&tc.storage)
+			moc := newChatChecker(&tc.storage)
 			moc.setNext(&mockHandler{runLog: &runLog})
 
 			_ = moc.handle(nil, nil, tc.given)
