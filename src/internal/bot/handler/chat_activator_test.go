@@ -10,18 +10,7 @@ import (
 	"leonid/src/internal/testutil"
 )
 
-type chatActivatorMock struct {
-	runLog      *[]string
-	activateRes bool
-	activateErr error
-}
-
-func (m *chatActivatorMock) Activate(_ context.Context, pass string, chatID int64) (bool, error) {
-	*m.runLog = append(*m.runLog, fmt.Sprintf("Activate: %s, %d", pass, chatID))
-	return m.activateRes, m.activateErr
-}
-
-func Test_chatActivator_handle(t *testing.T) {
+func TestChatActivatorHandle(t *testing.T) {
 	update := &models.Update{
 		Message: &models.Message{
 			Text: "pass",
@@ -32,13 +21,13 @@ func Test_chatActivator_handle(t *testing.T) {
 	}
 	testCases := []struct {
 		description    string
-		chatActivator  chatActivatorMock
+		chatActivator  mockChatActivator
 		given          *UpdateContext
 		expectedRunLog []string
 	}{
 		{
 			description:   "it should do nothing and call next handler if chat is already active",
-			chatActivator: chatActivatorMock{},
+			chatActivator: mockChatActivator{},
 			given:         &UpdateContext{Update: update, IsChatActive: true},
 			expectedRunLog: []string{
 				"handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: true}),
@@ -46,7 +35,7 @@ func Test_chatActivator_handle(t *testing.T) {
 		},
 		{
 			description:   "it should set IsPassActive from Activate function result and call next handler",
-			chatActivator: chatActivatorMock{activateRes: true},
+			chatActivator: mockChatActivator{activateRes: true},
 			given:         &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"Activate: pass, 123",
@@ -66,4 +55,15 @@ func Test_chatActivator_handle(t *testing.T) {
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})
 	}
+}
+
+type mockChatActivator struct {
+	runLog      *[]string
+	activateRes bool
+	activateErr error
+}
+
+func (m *mockChatActivator) Activate(_ context.Context, pass string, chatID int64) (bool, error) {
+	*m.runLog = append(*m.runLog, fmt.Sprintf("Activate: %s, %d", pass, chatID))
+	return m.activateRes, m.activateErr
 }

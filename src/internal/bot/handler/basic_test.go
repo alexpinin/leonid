@@ -6,7 +6,7 @@ import (
 	"leonid/src/internal/testutil"
 )
 
-func Test_basicHandler_nextHandle(t *testing.T) {
+func TestBasicHandlerNextHandle(t *testing.T) {
 	t.Run("should call next handler if it's not nil", func(t *testing.T) {
 		runLog := make([]string, 0)
 		sut := &basicHandler{}

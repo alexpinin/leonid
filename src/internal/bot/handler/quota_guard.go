@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-telegram/bot"
 )
@@ -18,12 +19,17 @@ func newQuotaGuard(qm quotaManager) *quotaGuard {
 }
 
 type quotaManager interface {
-	UseChatQuota(chatID int64) bool
+	UseChatQuota(chatID int64) (bool, error)
 }
 
 func (h *quotaGuard) handle(c context.Context, b *bot.Bot, u *UpdateContext) error {
-	if !h.UseChatQuota(u.Message.Chat.ID) {
+	quota, err := h.UseChatQuota(u.Message.Chat.ID)
+	if err != nil {
+		return fmt.Errorf("quotaManager.handle: %w", err)
+	}
+	if !quota {
 		return nil
 	}
+
 	return h.nextHandle(c, b, u)
 }

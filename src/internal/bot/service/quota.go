@@ -7,6 +7,6 @@ func NewQuotaService() *QuotaService {
 	return &QuotaService{}
 }
 
-func (*QuotaService) UseChatQuota(int64) bool {
-	return true
+func (*QuotaService) UseChatQuota(int64) (bool, error) {
+	return true, nil
 }

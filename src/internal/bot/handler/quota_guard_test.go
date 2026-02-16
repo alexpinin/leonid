@@ -9,17 +9,7 @@ import (
 	"leonid/src/internal/testutil"
 )
 
-type quotaManagerMock struct {
-	runLog *[]string
-	result bool
-}
-
-func (m *quotaManagerMock) UseChatQuota(chatID int64) bool {
-	*m.runLog = append(*m.runLog, fmt.Sprintf("UseChatQuota: %d", chatID))
-	return m.result
-}
-
-func Test_quotaGuard_handle(t *testing.T) {
+func TestQuotaGuardHandle(t *testing.T) {
 	update := &models.Update{
 		Message: &models.Message{
 			Chat: models.Chat{
@@ -29,13 +19,13 @@ func Test_quotaGuard_handle(t *testing.T) {
 	}
 	testCases := []struct {
 		description    string
-		quotaManager   *quotaManagerMock
+		quotaManager   *mockQuotaManager
 		given          *UpdateContext
 		expectedRunLog []string
 	}{
 		{
 			description:  "should call next handler if UseChatQuota returns true",
-			quotaManager: &quotaManagerMock{result: true},
+			quotaManager: &mockQuotaManager{useChatQuotaRes: true},
 			given:        &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"UseChatQuota: 123",
@@ -44,7 +34,7 @@ func Test_quotaGuard_handle(t *testing.T) {
 		},
 		{
 			description:  "should not call next handler and exit if UseChatQuota returns false",
-			quotaManager: &quotaManagerMock{result: false},
+			quotaManager: &mockQuotaManager{useChatQuotaRes: false},
 			given:        &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"UseChatQuota: 123",
@@ -63,4 +53,15 @@ func Test_quotaGuard_handle(t *testing.T) {
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})
 	}
+}
+
+type mockQuotaManager struct {
+	runLog          *[]string
+	useChatQuotaRes bool
+	useChatQuotaErr error
+}
+
+func (m *mockQuotaManager) UseChatQuota(chatID int64) (bool, error) {
+	*m.runLog = append(*m.runLog, fmt.Sprintf("UseChatQuota: %d", chatID))
+	return m.useChatQuotaRes, m.useChatQuotaErr
 }

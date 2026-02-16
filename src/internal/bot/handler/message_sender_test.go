@@ -11,16 +11,7 @@ import (
 	"leonid/src/internal/testutil"
 )
 
-type messageSenderMock struct {
-	runLog *[]string
-}
-
-func (m *messageSenderMock) SendMessage(_ context.Context, _ *bot.Bot, chatID int64, message string) error {
-	*m.runLog = append(*m.runLog, fmt.Sprintf("SendMessage: %d, %s", chatID, message))
-	return nil
-}
-
-func Test_messageSender_handle(t *testing.T) {
+func TestMessageSenderHandle(t *testing.T) {
 	update := &models.Update{
 		Message: &models.Message{
 			Text: "message",
@@ -29,13 +20,13 @@ func Test_messageSender_handle(t *testing.T) {
 	}
 	testCases := []struct {
 		description    string
-		messageSender  messageSenderMock
+		messageSender  mockMessageSender
 		given          *UpdateContext
 		expectedRunLog []string
 	}{
 		{
 			description:   "should send message and call next handler",
-			messageSender: messageSenderMock{},
+			messageSender: mockMessageSender{},
 			given:         &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"SendMessage: 123, message",
@@ -55,4 +46,13 @@ func Test_messageSender_handle(t *testing.T) {
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})
 	}
+}
+
+type mockMessageSender struct {
+	runLog *[]string
+}
+
+func (m *mockMessageSender) SendMessage(_ context.Context, _ *bot.Bot, chatID int64, message string) error {
+	*m.runLog = append(*m.runLog, fmt.Sprintf("SendMessage: %d, %s", chatID, message))
+	return nil
 }

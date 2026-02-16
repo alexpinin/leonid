@@ -10,7 +10,7 @@ import (
 	"leonid/src/internal/testutil"
 )
 
-func Test_callGuard_handle(t *testing.T) {
+func TestCallGuardHandle(t *testing.T) {
 	update := &models.Update{
 		Message: &models.Message{
 			Text: "Hello, Bot",

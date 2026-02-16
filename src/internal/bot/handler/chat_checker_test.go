@@ -10,18 +10,7 @@ import (
 	"leonid/src/internal/testutil"
 )
 
-type chatCheckerStorageMock struct {
-	runLog          *[]string
-	isChatActiveRes bool
-	isChatActiveErr error
-}
-
-func (m *chatCheckerStorageMock) IsChatActive(_ context.Context, chatID int64) (bool, error) {
-	*m.runLog = append(*m.runLog, fmt.Sprintf("IsChatActive: %d", chatID))
-	return m.isChatActiveRes, m.isChatActiveErr
-}
-
-func Test_chatChecker_handle(t *testing.T) {
+func TestChatCheckerHandle(t *testing.T) {
 	update := &models.Update{
 		Message: &models.Message{
 			Chat: models.Chat{ID: 123},
@@ -29,13 +18,13 @@ func Test_chatChecker_handle(t *testing.T) {
 	}
 	testCases := []struct {
 		description    string
-		storage        chatCheckerStorageMock
+		storage        mockChatCheckerStorage
 		given          *UpdateContext
 		expectedRunLog []string
 	}{
 		{
 			description: "should set IsChatActive from the IsChatActive function result and call next handler",
-			storage:     chatCheckerStorageMock{isChatActiveRes: true},
+			storage:     mockChatCheckerStorage{isChatActiveRes: true},
 			given:       &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"IsChatActive: 123",
@@ -55,4 +44,15 @@ func Test_chatChecker_handle(t *testing.T) {
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})
 	}
+}
+
+type mockChatCheckerStorage struct {
+	runLog          *[]string
+	isChatActiveRes bool
+	isChatActiveErr error
+}
+
+func (m *mockChatCheckerStorage) IsChatActive(_ context.Context, chatID int64) (bool, error) {
+	*m.runLog = append(*m.runLog, fmt.Sprintf("IsChatActive: %d", chatID))
+	return m.isChatActiveRes, m.isChatActiveErr
 }

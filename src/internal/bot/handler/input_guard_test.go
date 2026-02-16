@@ -8,7 +8,7 @@ import (
 	"leonid/src/internal/testutil"
 )
 
-func Test_inputGuard_handle(t *testing.T) {
+func TestInputGuardHandle(t *testing.T) {
 	testCases := []struct {
 		description    string
 		given          *UpdateContext

@@ -13,7 +13,7 @@ func init() {
 	_ = os.Setenv("DB_FILE", "DB_FILE")
 }
 
-func Test_Handler(t *testing.T) {
+func TestHandler(t *testing.T) {
 	t.Run("it should use a specific handlers order", func(t *testing.T) {
 		sut := NewBotHandler(
 			&service.ConfigService{},

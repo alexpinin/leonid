@@ -6,7 +6,7 @@ import (
 	"leonid/src/internal/testutil"
 )
 
-func Test_authGuard_handle(t *testing.T) {
+func TestAuthGuardHandle(t *testing.T) {
 	testCases := []struct {
 		description    string
 		given          *UpdateContext
