@@ -60,38 +60,38 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b *bot.Bot, chatID int6
 			return fmt.Errorf("cannot build openai context: %w", err)
 		}
 
-		prompt := s.buildPrompt(config, history)
-
-		completion, err := s.llmClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-			Messages: prompt,
+		llmParams := openai.ChatCompletionNewParams{
+			Messages: s.buildPrompt(config, history),
 			Model:    s.config.Model,
-		})
+		}
+		completion, err := s.llmClient.Chat.Completions.New(ctx, llmParams)
 		if err != nil {
 			return fmt.Errorf("cannot get LLM response: %w", err)
 		}
-
 		if len(completion.Choices) == 0 {
 			return errors.New(fmt.Sprintf("no ai choices"))
 		}
 
 		response := completion.Choices[0].Message.Content
-
 		config.ConversationHistory, err = s.historyToPersist(history, response)
 		if err != nil {
-			return err
-		}
-		err = s.configRepo.UpdateConfig(tx, ctx, config.ID, config)
-		if err != nil {
-			return err
+			return errors.New(fmt.Sprintf("cannot convert history to persist"))
 		}
 
-		_, err = b.SendMessage(ctx, &bot.SendMessageParams{
+		err = s.configRepo.UpdateConfig(tx, ctx, config.ID, config)
+		if err != nil {
+			return errors.New(fmt.Sprintf("cannot update config"))
+		}
+
+		telegramParams := bot.SendMessageParams{
 			ChatID: chatID,
 			Text:   response,
-		})
+		}
+		_, err = b.SendMessage(ctx, &telegramParams)
 		if err != nil {
 			return fmt.Errorf("cannot send Telegram message: %w", err)
 		}
+
 		return nil
 	})
 	if err != nil {

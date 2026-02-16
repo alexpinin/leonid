@@ -15,7 +15,7 @@ type Config struct {
 	Nicknames           []string
 	SystemPrompt        string
 	MessagePrompt       string
-	ConversationHistory string
+	ConversationHistory string // might vary for different LLM providers
 }
 
 type OpenAIConversationMessage struct {
