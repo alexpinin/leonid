@@ -16,6 +16,8 @@ import (
 	"leonid/src/internal/db"
 )
 
+const maxMessageHistoryLen = 10
+
 type OpenAIService struct {
 	executor   db.QueryExecutor
 	configRepo configRepo
@@ -101,10 +103,6 @@ func (_ *OpenAIService) conversationHistory(config dto.Config, message string) (
 		return dto.OpenAIConversationHistory{}, err
 	}
 
-	if len(history.Messages) >= 10 {
-		history.Messages = history.Messages[1:]
-	}
-
 	history.Messages = append(history.Messages, dto.OpenAIConversationMessage{
 		OfUser: &openai.ChatCompletionUserMessageParam{
 			Content: openai.ChatCompletionUserMessageParamContentUnion{
@@ -143,10 +141,6 @@ func (_ *OpenAIService) buildPrompt(config dto.Config, history dto.OpenAIConvers
 }
 
 func (_ *OpenAIService) historyToPersist(history dto.OpenAIConversationHistory, message string) (string, error) {
-	if len(history.Messages) >= 10 {
-		history.Messages = history.Messages[1:]
-	}
-
 	history.Messages = append(history.Messages, dto.OpenAIConversationMessage{
 		OfAssistant: &openai.ChatCompletionAssistantMessageParam{
 			Content: openai.ChatCompletionAssistantMessageParamContentUnion{
@@ -154,6 +148,10 @@ func (_ *OpenAIService) historyToPersist(history dto.OpenAIConversationHistory, 
 			},
 		},
 	})
+
+	if len(history.Messages) > maxMessageHistoryLen {
+		history.Messages = history.Messages[len(history.Messages)-maxMessageHistoryLen:]
+	}
 
 	conversationContext, err := json.Marshal(history)
 	if err != nil {
