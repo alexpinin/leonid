@@ -3,11 +3,13 @@ package service
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/packages/param"
 
 	"leonid/src/internal/bot/dto"
 	"leonid/src/internal/db"
@@ -38,10 +40,6 @@ func TestOpenAIService(t *testing.T) {
 	chatID := int64(123)
 	userMessage := "user message"
 
-	savedConfig := dto.Config{
-		ConversationHistory: `{"messages":[{"ofUser":{"content":"user message","role":"user"},"ofAssistant":null},{"ofUser":null,"ofAssistant":{"content":"LLM message","role":"assistant"}}]}`,
-	}
-
 	t.Run("should send message and save conversation history", func(t *testing.T) {
 		cr := &mockConfigRepo{
 			findConfigByChatIDRes: dto.Config{
@@ -54,11 +52,70 @@ func TestOpenAIService(t *testing.T) {
 
 		testutil.Equal(t, nil, err)
 		testutil.Equal(t, llmMessage, b.sendMessageIn1.Text)
-		testutil.Equal(t, savedConfig, cr.updateConfigIn3)
+
+		history := dto.OpenAIConversationHistory{
+			Messages: []dto.OpenAIConversationMessage{
+				{
+					OfUser: &openai.ChatCompletionUserMessageParam{
+						Content: openai.ChatCompletionUserMessageParamContentUnion{
+							OfString: param.Opt[string]{Value: userMessage},
+						},
+					},
+				},
+				{
+					OfAssistant: &openai.ChatCompletionAssistantMessageParam{
+						Content: openai.ChatCompletionAssistantMessageParamContentUnion{
+							OfString: param.Opt[string]{Value: llmMessage},
+						},
+					},
+				},
+			},
+		}
+		expected := dto.Config{ConversationHistory: string(testutil.MustMarshalJson(t, history))}
+		testutil.Equal(t, expected, cr.updateConfigIn3)
 	})
 
 	t.Run("should trim history when it reaches 10 messages", func(t *testing.T) {
+		history := dto.OpenAIConversationHistory{
+			Messages: make([]dto.OpenAIConversationMessage, 10),
+		}
+		for i := range len(history.Messages) {
+			history.Messages[i] = dto.OpenAIConversationMessage{
+				OfUser: &openai.ChatCompletionUserMessageParam{
+					Content: openai.ChatCompletionUserMessageParamContentUnion{
+						OfString: param.Opt[string]{Value: fmt.Sprintf("message_%d", i)},
+					},
+				},
+			}
+		}
+		cr := &mockConfigRepo{
+			findConfigByChatIDRes: dto.Config{
+				ConversationHistory: string(testutil.MustMarshalJson(t, history)),
+			},
+		}
+		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
 
+		err := sut.SendMessage(ctx, b, chatID, userMessage)
+
+		testutil.Equal(t, nil, err)
+
+		history.Messages = append(history.Messages, dto.OpenAIConversationMessage{
+			OfUser: &openai.ChatCompletionUserMessageParam{
+				Content: openai.ChatCompletionUserMessageParamContentUnion{
+					OfString: param.Opt[string]{Value: userMessage},
+				},
+			},
+		})
+		history.Messages = append(history.Messages, dto.OpenAIConversationMessage{
+			OfAssistant: &openai.ChatCompletionAssistantMessageParam{
+				Content: openai.ChatCompletionAssistantMessageParamContentUnion{
+					OfString: param.Opt[string]{Value: llmMessage},
+				},
+			},
+		})
+		history.Messages = history.Messages[2:]
+		expected := dto.Config{ConversationHistory: string(testutil.MustMarshalJson(t, history))}
+		testutil.Equal(t, expected, cr.updateConfigIn3)
 	})
 
 	t.Run("should return error if FindConfigByChatID returns error", func(t *testing.T) {
