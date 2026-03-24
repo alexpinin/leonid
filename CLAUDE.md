@@ -68,7 +68,6 @@ db/
 
 ### Design Issues
 
-5. **No SQLite concurrency settings** — No WAL mode or busy_timeout. Concurrent messages will cause "database is locked" errors. `db.go`
 6. **No graceful shutdown** — SIGINT cancels context immediately, can cut in-progress LLM calls or transactions mid-way. `bot.go:49-64`
 7. **Double sliding window trim** — conversationHistory() trims at >=10 then adds user msg, historyToPersist() trims again at >=10 then adds assistant msg. Works but fragile. `openai.go:107-127, 155-173`
 8. **QuotaService is a stub** — UseChatQuota always returns true. `quota.go`

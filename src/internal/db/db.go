@@ -13,7 +13,8 @@ type Config struct {
 }
 
 func OpenDB(cfg Config) (*sql.DB, error) {
-	db, err := sql.Open("sqlite", cfg.DBFile)
+	connStr := cfg.DBFile + "?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)"
+	db, err := sql.Open("sqlite", connStr)
 	if err != nil {
 		return nil, err
 	}
