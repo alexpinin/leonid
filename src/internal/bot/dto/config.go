@@ -14,7 +14,6 @@ type Config struct {
 	PassValidBy         time.Time
 	Nicknames           []string
 	SystemPrompt        string
-	MessagePrompt       string
 	ConversationHistory string // might vary for different LLM providers
 }
 

@@ -7,6 +7,5 @@ CREATE TABLE IF NOT EXISTS config
     chat_activated_at    integer NOT NULL DEFAULT 0,
     nicknames            text    NOT NULL DEFAULT '',
     system_prompt        text    NOT NULL DEFAULT '',
-    message_prompt       text    NOT NULL DEFAULT '',
     conversation_context text    NOT NULL DEFAULT '{}'
 );

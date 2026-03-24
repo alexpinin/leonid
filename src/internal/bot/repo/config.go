@@ -28,7 +28,6 @@ func (r *ConfigRepo) FindConfigByPass(ex db.Executor, ctx context.Context, pass 
 			chat_activated_at,
 			nicknames,
 			system_prompt,
-			message_prompt,
 			conversation_context
 		FROM config
 		WHERE pass = $1
@@ -51,7 +50,6 @@ func (r *ConfigRepo) FindConfigByChatID(ex db.Executor, ctx context.Context, cha
 			chat_activated_at,
 			nicknames,
 			system_prompt,
-			message_prompt,
 			conversation_context
 		FROM config
 		WHERE chat_id = $1
@@ -92,7 +90,6 @@ func scanConfig(r *sql.Row) (dto.Config, error) {
 		&chatActivatedAt,
 		&nicknamesStr,
 		&config.SystemPrompt,
-		&config.MessagePrompt,
 		&config.ConversationHistory,
 	)
 	if err != nil {

@@ -118,7 +118,7 @@ func (_ *OpenAIService) conversationHistory(config dto.Config, message string) (
 	history.Messages = append(history.Messages, dto.OpenAIConversationMessage{
 		OfUser: &openai.ChatCompletionUserMessageParam{
 			Content: openai.ChatCompletionUserMessageParamContentUnion{
-				OfString: param.Opt[string]{Value: message + fmt.Sprintf(". %s", config.MessagePrompt)},
+				OfString: param.Opt[string]{Value: message},
 			},
 		},
 	})
