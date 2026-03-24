@@ -16,11 +16,11 @@ import (
 
 func TestOpenAIService(t *testing.T) {
 	b := &mockBot{}
-	//cr := &mockConfigRepo{
-	//	findConfigByChatIDRes: dto.Config{
-	//		ConversationHistory: "{}",
-	//	},
-	//}
+	cr := &mockConfigRepo{
+		findConfigByChatIDRes: dto.Config{
+			ConversationHistory: "{}",
+		},
+	}
 	llmMessage := "LLM message"
 	lc := &mockLLMClient{
 		createChatCompletionRes: &openai.ChatCompletion{
@@ -38,6 +38,10 @@ func TestOpenAIService(t *testing.T) {
 	chatID := int64(123)
 	userMessage := "user message"
 
+	savedConfig := dto.Config{
+		ConversationHistory: `{"messages":[{"ofUser":{"content":"user message","role":"user"},"ofAssistant":null},{"ofUser":null,"ofAssistant":{"content":"LLM message","role":"assistant"}}]}`,
+	}
+
 	t.Run("should send message and save conversation history", func(t *testing.T) {
 		cr := &mockConfigRepo{
 			findConfigByChatIDRes: dto.Config{
@@ -50,49 +54,61 @@ func TestOpenAIService(t *testing.T) {
 
 		testutil.Equal(t, nil, err)
 		testutil.Equal(t, llmMessage, b.sendMessageIn1.Text)
-		testutil.Equal(t, dto.Config{
-			ConversationHistory: `{"messages":[{"ofUser":{"content":"user message","role":"user"},"ofAssistant":null},{"ofUser":null,"ofAssistant":{"content":"LLM message","role":"assistant"}}]}`,
-		}, cr.updateConfigIn3)
-	})
-
-	t.Run("should return error when config not found", func(t *testing.T) {
-
-	})
-
-	t.Run("should return error when config repo fails", func(t *testing.T) {
-
-	})
-
-	t.Run("should unmarshal existing conversation history", func(t *testing.T) {
-
-	})
-
-	t.Run("should return error when conversation history is invalid JSON", func(t *testing.T) {
-
+		testutil.Equal(t, savedConfig, cr.updateConfigIn3)
 	})
 
 	t.Run("should trim history when it reaches 10 messages", func(t *testing.T) {
 
 	})
 
-	t.Run("should return error when LLM call fails", func(t *testing.T) {
+	t.Run("should return error if FindConfigByChatID returns error", func(t *testing.T) {
+		cr := &mockConfigRepo{findConfigByChatIDErr: testutil.TestError}
+		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
 
+		err := sut.SendMessage(ctx, b, chatID, userMessage)
+
+		testutil.ErrorIs(t, testutil.TestError, err)
 	})
 
-	t.Run("should return error when LLM returns no choices", func(t *testing.T) {
+	t.Run("should return error if Unmarshal returns error", func(t *testing.T) {
+		cr := &mockConfigRepo{findConfigByChatIDRes: dto.Config{}}
+		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
 
+		err := sut.SendMessage(ctx, b, chatID, userMessage)
+
+		testutil.ErrorContains(t, "unexpected end of JSON input", err)
 	})
 
-	t.Run("should return error when config update fails", func(t *testing.T) {
+	t.Run("should return error if CreateChatCompletion returns error", func(t *testing.T) {
+		lc := &mockLLMClient{createChatCompletionErr: testutil.TestError}
+		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
 
+		err := sut.SendMessage(ctx, b, chatID, userMessage)
+
+		testutil.ErrorIs(t, testutil.TestError, err)
 	})
 
-	t.Run("should append assistant response to persisted history", func(t *testing.T) {
+	t.Run("should return error if UpdateConfig returns error", func(t *testing.T) {
+		cr := &mockConfigRepo{
+			findConfigByChatIDRes: dto.Config{ConversationHistory: "{}"},
+			updateConfigErr:       testutil.TestError,
+		}
+		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
 
+		err := sut.SendMessage(ctx, b, chatID, userMessage)
+
+		testutil.ErrorIs(t, testutil.TestError, err)
 	})
 
-	t.Run("should return error when Telegram send fails", func(t *testing.T) {
+	t.Run("should return error if SendMessage returns error", func(t *testing.T) {
+		b := &mockBot{
+			sendMessageErr: testutil.TestError,
+		}
+		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
 
+		err := sut.SendMessage(ctx, b, chatID, userMessage)
+
+		testutil.ErrorIs(t, testutil.TestError, err)
 	})
 
 	t.Run("should send LLM response text to correct chat ID", func(t *testing.T) {
