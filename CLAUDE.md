@@ -68,7 +68,6 @@ db/
 
 ### Design Issues
 
-4. **Telegram send inside DB transaction** — b.SendMessage is inside ExecuteInTx. If commit fails, user sees the reply but history isn't saved. If send fails, tx rolls back wasting LLM tokens. `openai.go:90-97`
 5. **No SQLite concurrency settings** — No WAL mode or busy_timeout. Concurrent messages will cause "database is locked" errors. `db.go`
 6. **No graceful shutdown** — SIGINT cancels context immediately, can cut in-progress LLM calls or transactions mid-way. `bot.go:49-64`
 7. **Double sliding window trim** — conversationHistory() trims at >=10 then adds user msg, historyToPersist() trims again at >=10 then adds assistant msg. Works but fragile. `openai.go:107-127, 155-173`
@@ -87,5 +86,4 @@ db/
 14. **Logger strips slog structured logging** — only exposes Info(string)/Error(string), no fields or context. `logger.go`
 15. **testutil.Equal missing t.Helper()** — failure traces point to equal.go, not the test. `equal.go:8`
 16. **Unnecessary fmt.Sprintf** — `logger.Info(fmt.Sprintf("Starting bot"))` should be `logger.Info("Starting bot")`. `main.go:28`
-17. **BotHandler accepts concrete types** — NewBotHandler takes *service.ConfigService etc. instead of interfaces. `bot_handler.go:29-32`
 18. **Unwrapped error from json.Unmarshal** — in conversationHistory, unmarshal error returned without context. `openai.go:110-112`
