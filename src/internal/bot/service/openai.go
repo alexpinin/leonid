@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-telegram/bot"
 	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
 
 	"leonid/src/internal/bot/dto"
@@ -18,17 +17,11 @@ import (
 )
 
 type OpenAIService struct {
-	config     OpenAIConfig
 	executor   db.QueryExecutor
 	configRepo configRepo
-	llmClient  openai.Client
-	chatLocks  sync.Map
-}
+	client     llmClient
 
-type OpenAIConfig struct {
-	BaseURL string
-	Token   string
-	Model   string
+	chatLocks sync.Map
 }
 
 type configRepo interface {
@@ -36,23 +29,24 @@ type configRepo interface {
 	UpdateConfig(db.Executor, context.Context, string, dto.Config) error
 }
 
+type llmClient interface {
+	CreateChatCompletion(ctx context.Context, req openai.ChatCompletionNewParams) (*openai.ChatCompletion, error)
+	Model() string
+}
+
 func NewOpenAIService(
-	cfg OpenAIConfig,
 	qe db.QueryExecutor,
 	cr configRepo,
+	lc llmClient,
 ) *OpenAIService {
 	return &OpenAIService{
-		config:     cfg,
 		executor:   qe,
 		configRepo: cr,
-		llmClient: openai.NewClient(
-			option.WithBaseURL(cfg.BaseURL),
-			option.WithAPIKey(cfg.Token),
-		),
+		client:     lc,
 	}
 }
 
-func (s *OpenAIService) SendMessage(ctx context.Context, b *bot.Bot, chatID int64, message string) error {
+func (s *OpenAIService) SendMessage(ctx context.Context, b dto.TelegramBot, chatID int64, message string) error {
 	s.chatMutex(chatID).Lock()
 	defer s.chatMutex(chatID).Unlock()
 
@@ -68,9 +62,9 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b *bot.Bot, chatID int6
 
 	llmParams := openai.ChatCompletionNewParams{
 		Messages: s.buildPrompt(config, history),
-		Model:    s.config.Model,
+		Model:    s.client.Model(),
 	}
-	completion, err := s.llmClient.Chat.Completions.New(ctx, llmParams)
+	completion, err := s.client.CreateChatCompletion(ctx, llmParams)
 	if err != nil {
 		return fmt.Errorf("OpenAIService.SendMessage: cannot get LLM response: %w", err)
 	}

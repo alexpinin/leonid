@@ -34,11 +34,13 @@ func Start(database *sql.DB, cfg Config) error {
 
 	configService := service.NewConfigService(executor, configRepo)
 	quotaService := service.NewQuotaService()
-	messageService := service.NewOpenAIService(service.OpenAIConfig{
+
+	llmClient := service.NewOpenAIClient(service.OpenAIConfig{
 		BaseURL: url,
 		Token:   cfg.LLMToken,
 		Model:   cfg.LLMModel,
-	}, executor, configRepo)
+	})
+	messageService := service.NewOpenAIService(executor, configRepo, llmClient)
 
 	botHandler := handler.NewBotHandler(
 		configService,

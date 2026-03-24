@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/go-telegram/bot"
+
+	"leonid/src/internal/bot/dto"
 )
 
 type messageSender struct {
@@ -19,7 +21,7 @@ func newMessageSender(ms mSender) *messageSender {
 }
 
 type mSender interface {
-	SendMessage(ctx context.Context, b *bot.Bot, chatID int64, message string) error
+	SendMessage(ctx context.Context, b dto.TelegramBot, chatID int64, message string) error
 }
 
 func (h *messageSender) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) error {
