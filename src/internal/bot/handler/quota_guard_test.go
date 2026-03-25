@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -24,8 +25,8 @@ func TestQuotaGuardHandle(t *testing.T) {
 		expectedRunLog []string
 	}{
 		{
-			description:  "should call next handler if UseChatQuota returns true",
-			quotaManager: &mockQuotaManager{useChatQuotaRes: true},
+			description:  "should call next handler if UseChatQuota returns no error",
+			quotaManager: &mockQuotaManager{},
 			given:        &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"UseChatQuota: 123",
@@ -33,8 +34,8 @@ func TestQuotaGuardHandle(t *testing.T) {
 			},
 		},
 		{
-			description:  "should not call next handler and exit if UseChatQuota returns false",
-			quotaManager: &mockQuotaManager{useChatQuotaRes: false},
+			description:  "should not call next handler and exit if UseChatQuota returns error",
+			quotaManager: &mockQuotaManager{useChatQuotaErr: testutil.TestError},
 			given:        &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"UseChatQuota: 123",
@@ -57,11 +58,10 @@ func TestQuotaGuardHandle(t *testing.T) {
 
 type mockQuotaManager struct {
 	runLog          *[]string
-	useChatQuotaRes bool
 	useChatQuotaErr error
 }
 
-func (m *mockQuotaManager) UseChatQuota(chatID int64) (bool, error) {
+func (m *mockQuotaManager) UseChatQuota(_ context.Context, chatID int64) error {
 	*m.runLog = append(*m.runLog, fmt.Sprintf("UseChatQuota: %d", chatID))
-	return m.useChatQuotaRes, m.useChatQuotaErr
+	return m.useChatQuotaErr
 }

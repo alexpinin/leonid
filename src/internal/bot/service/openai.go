@@ -28,7 +28,7 @@ type OpenAIService struct {
 
 type configRepo interface {
 	FindConfigByChatID(db.Executor, context.Context, int64) (dto.Config, error)
-	UpdateConfig(db.Executor, context.Context, string, dto.Config) error
+	UpdateConfig(db.Executor, context.Context, dto.Config) error
 }
 
 type llmClient interface {
@@ -80,7 +80,7 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b dto.TelegramBot, chat
 		return fmt.Errorf("OpenAIService.SendMessage: cannot convert history to persist: %w", err)
 	}
 
-	err = s.configRepo.UpdateConfig(s.executor.Executor(), ctx, config.ID, config)
+	err = s.configRepo.UpdateConfig(s.executor.Executor(), ctx, config)
 	if err != nil {
 		return fmt.Errorf("OpenAIService.SendMessage: cannot update config: %w", err)
 	}

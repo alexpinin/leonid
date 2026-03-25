@@ -29,7 +29,7 @@ func NewConfigService(
 type ConfigRepo interface {
 	FindConfigByPass(db.Executor, context.Context, string) (dto.Config, error)
 	FindConfigByChatID(db.Executor, context.Context, int64) (dto.Config, error)
-	UpdateConfig(db.Executor, context.Context, string, dto.Config) error
+	UpdateConfig(db.Executor, context.Context, dto.Config) error
 }
 
 func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64) (bool, error) {
@@ -46,7 +46,7 @@ func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64)
 		config.ChatID = chatID
 		config.ChatActivatedAt = time.Now()
 
-		err = s.configRepo.UpdateConfig(tx, ctx, config.ID, config)
+		err = s.configRepo.UpdateConfig(tx, ctx, config)
 		if err != nil {
 			return fmt.Errorf("cannot activate config: %w", err)
 		}

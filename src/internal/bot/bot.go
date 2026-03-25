@@ -31,9 +31,10 @@ func Start(database *sql.DB, cfg Config) error {
 	executor := db.NewAppQueryExecutor(database)
 
 	configRepo := repo.NewConfigRepo()
+	quotaRepo := repo.NewQuotaRepo()
 
 	configService := service.NewConfigService(executor, configRepo)
-	quotaService := service.NewQuotaService()
+	quotaService := service.NewQuotaService(executor, quotaRepo)
 
 	llmClient := service.NewOpenAIClient(service.OpenAIConfig{
 		BaseURL: url,

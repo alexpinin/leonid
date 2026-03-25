@@ -60,6 +60,10 @@ db/
 
 ## Known Issues
 
+### TODO
+
+- Add the message length guard
+
 ### Bugs
 
 1. **README references `run.sh` but file is `start.sh`** — README.md:16

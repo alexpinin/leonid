@@ -19,16 +19,13 @@ func newQuotaGuard(qm quotaManager) *quotaGuard {
 }
 
 type quotaManager interface {
-	UseChatQuota(chatID int64) (bool, error)
+	UseChatQuota(c context.Context, chatID int64) error
 }
 
 func (h *quotaGuard) handle(c context.Context, b *bot.Bot, u *UpdateContext) error {
-	quota, err := h.UseChatQuota(u.Message.Chat.ID)
+	err := h.UseChatQuota(c, u.Message.Chat.ID)
 	if err != nil {
 		return fmt.Errorf("quotaManager.handle: %w", err)
-	}
-	if !quota {
-		return nil
 	}
 
 	return h.nextHandle(c, b, u)

@@ -203,7 +203,7 @@ func (m *mockConfigRepo) FindConfigByChatID(db.Executor, context.Context, int64)
 	return m.findConfigByChatIDRes, m.findConfigByChatIDErr
 }
 
-func (m *mockConfigRepo) UpdateConfig(_ db.Executor, _ context.Context, _ string, in3 dto.Config) error {
+func (m *mockConfigRepo) UpdateConfig(_ db.Executor, _ context.Context, in3 dto.Config) error {
 	m.updateConfigIn3 = in3
 	return m.updateConfigErr
 }
