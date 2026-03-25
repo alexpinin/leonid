@@ -94,7 +94,7 @@ func (_ *OpenAIService) conversationHistory(config dto.Config, message string) (
 	history := dto.OpenAIConversationHistory{}
 	err := json.Unmarshal([]byte(config.ConversationHistory), &history)
 	if err != nil {
-		return dto.OpenAIConversationHistory{}, err
+		return dto.OpenAIConversationHistory{}, fmt.Errorf("failed to unmarshal conversation history: %w", err)
 	}
 
 	history.Messages = append(history.Messages, dto.OpenAIConversationMessage{

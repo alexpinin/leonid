@@ -25,7 +25,7 @@ func main() {
 		LLMModel:    mustLoad("LLM_MODEL"),
 	}
 
-	logger.Info(fmt.Sprintf("Starting bot"))
+	logger.Info("Starting bot")
 
 	err = bot.Start(database, cfg)
 	if err != nil {
