@@ -20,32 +20,26 @@ const maxMessageHistoryLen = 10
 
 type OpenAIService struct {
 	executor   db.QueryExecutor
-	configRepo configRepo
-	client     llmClient
-
-	chatLocks sync.Map
-}
-
-type configRepo interface {
-	FindConfigByChatID(db.Executor, context.Context, int64) (dto.Config, error)
-	UpdateConfig(db.Executor, context.Context, dto.Config) error
-}
-
-type llmClient interface {
-	CreateChatCompletion(ctx context.Context, req openai.ChatCompletionNewParams) (*openai.ChatCompletion, error)
-	Model() string
+	configRepo ConfigRepo
+	client     LlmClient
+	chatLocks  sync.Map
 }
 
 func NewOpenAIService(
 	qe db.QueryExecutor,
-	cr configRepo,
-	lc llmClient,
+	cr ConfigRepo,
+	lc LlmClient,
 ) *OpenAIService {
 	return &OpenAIService{
 		executor:   qe,
 		configRepo: cr,
 		client:     lc,
 	}
+}
+
+type LlmClient interface {
+	CreateChatCompletion(ctx context.Context, req openai.ChatCompletionNewParams) (*openai.ChatCompletion, error)
+	Model() string
 }
 
 func (s *OpenAIService) SendMessage(ctx context.Context, b dto.TelegramBot, chatID int64, message string) error {

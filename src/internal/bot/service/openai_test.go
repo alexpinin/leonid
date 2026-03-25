@@ -199,6 +199,10 @@ type mockConfigRepo struct {
 	updateConfigErr       error
 }
 
+func (m *mockConfigRepo) FindConfigByPass(db.Executor, context.Context, string) (dto.Config, error) {
+	return dto.Config{}, nil
+}
+
 func (m *mockConfigRepo) FindConfigByChatID(db.Executor, context.Context, int64) (dto.Config, error) {
 	return m.findConfigByChatIDRes, m.findConfigByChatIDErr
 }

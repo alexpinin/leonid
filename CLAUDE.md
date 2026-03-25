@@ -72,7 +72,6 @@ db/
 
 ### Code Quality
 
-12. **Duplicate configRepo interface** — exported in service/config.go:29, unexported in service/openai.go:33. Can drift.
 13. **MockQueryExecutor passes nil tx** — code under test panics if it actually uses the tx. `executor.go:51-53`
 14. **Logger strips slog structured logging** — only exposes Info(string)/Error(string), no fields or context. `logger.go`
 15. **testutil.Equal missing t.Helper()** — failure traces point to equal.go, not the test. `equal.go:8`
