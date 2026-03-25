@@ -27,7 +27,7 @@ func TestCallGuardHandle(t *testing.T) {
 	}{
 		{
 			description:      "should call next handler if bot is called by a nickname ignoring case",
-			nicknameProvider: mockNicknameProvider{listNicknamesRes: []string{"bot"}},
+			nicknameProvider: mockNicknameProvider{listNicknamesRes: []string{"Bot"}},
 			given:            &UpdateContext{Update: update},
 			expectedRunLog: []string{
 				"ListNicknames: 123",

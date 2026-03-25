@@ -26,6 +26,9 @@ func (h *callGuard) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) er
 	if err != nil {
 		return fmt.Errorf("callGuard.handle: %w", err)
 	}
+	for i, nickname := range nicknames {
+		nicknames[i] = strings.ToLower(nickname)
+	}
 
 	message := strings.ToLower(u.Message.Text)
 	for _, nickname := range nicknames {
