@@ -70,16 +70,6 @@ db/
 2. **start.sh env vars are out of sync with main.go** — start.sh exports OPENAI_LLM_TOKEN/DEEPSEEK_LLM_TOKEN but main.go expects LLM_PROVIDER, LLM_TOKEN, LLM_MODEL. Bot will fail to start with current start.sh.
 3. **callGuard nickname case mismatch** — message is lowercased but nicknames from DB are not; reply-to check lowers replyToNickname but not the nickname. Matches fail when nicknames have uppercase. `call_guard.go:30-46`
 
-### Design Issues
-
-8. **QuotaService is a stub** — UseChatQuota always returns true. `quota.go`
-
-### Schema Issues
-
-9. **No PRIMARY KEY on config table** — `id` has UNIQUE but not PRIMARY KEY. `init.sql:3`
-10. **No index on chat_id** — FindConfigByChatID does full table scan on every active-chat message. `init.sql`
-11. **conversation_context default is '{}'** — unmarshals to {messages: null}, works with Go nil-append but brittle. `init.sql:11`
-
 ### Code Quality
 
 12. **Duplicate configRepo interface** — exported in service/config.go:29, unexported in service/openai.go:33. Can drift.
