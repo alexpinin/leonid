@@ -72,8 +72,5 @@ db/
 
 ### Code Quality
 
-13. **MockQueryExecutor passes nil tx** — code under test panics if it actually uses the tx. `executor.go:51-53`
-14. **Logger strips slog structured logging** — only exposes Info(string)/Error(string), no fields or context. `logger.go`
-15. **testutil.Equal missing t.Helper()** — failure traces point to equal.go, not the test. `equal.go:8`
 16. **Unnecessary fmt.Sprintf** — `logger.Info(fmt.Sprintf("Starting bot"))` should be `logger.Info("Starting bot")`. `main.go:28`
 18. **Unwrapped error from json.Unmarshal** — in conversationHistory, unmarshal error returned without context. `openai.go:110-112`
