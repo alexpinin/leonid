@@ -63,8 +63,3 @@ db/
 ### TODO
 
 - Add the message length guard
-
-### Bugs
-
-1. **README references `run.sh` but file is `start.sh`** — README.md:16
-2. **start.sh env vars are out of sync with main.go** — start.sh exports OPENAI_LLM_TOKEN/DEEPSEEK_LLM_TOKEN but main.go expects LLM_PROVIDER, LLM_TOKEN, LLM_MODEL. Bot will fail to start with current start.sh.

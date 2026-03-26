@@ -10,8 +10,11 @@
 - Create db schema: `sqlite3 db/leonid.sqlite3 < db/init.sql`
 
 ## Build
-- Run `./build.sh`
+- Run `make build`
 
 ## Run
-- Update the `run.sh` file and set the environment variables
-- Run `./run.sh`
+- Copy `.env.example` to `.env` and set the environment variables
+- Run `make start`
+
+## Stop
+- Run `make stop`
