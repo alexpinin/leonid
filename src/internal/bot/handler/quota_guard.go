@@ -25,7 +25,7 @@ type quotaManager interface {
 func (h *quotaGuard) handle(c context.Context, b *bot.Bot, u *UpdateContext) error {
 	err := h.UseChatQuota(c, u.Message.Chat.ID)
 	if err != nil {
-		return fmt.Errorf("quotaManager.handle: %w", err)
+		return fmt.Errorf("quotaGuard.handle: %w", err)
 	}
 
 	return h.nextHandle(c, b, u)

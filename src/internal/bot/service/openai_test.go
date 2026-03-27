@@ -167,18 +167,6 @@ func TestOpenAIService(t *testing.T) {
 
 		testutil.ErrorIs(t, testutil.TestError, err)
 	})
-
-	t.Run("should send LLM response text to correct chat ID", func(t *testing.T) {
-
-	})
-
-	t.Run("should serialize messages for the same chat ID", func(t *testing.T) {
-
-	})
-
-	t.Run("should process messages for different chats in parallel", func(t *testing.T) {
-
-	})
 }
 
 type mockQueryExecutor struct {

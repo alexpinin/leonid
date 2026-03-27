@@ -45,3 +45,8 @@ Copy `.env.example` to `.env` and set the values:
 ## Stop
 
 - Run `make stop`
+
+## TODO
+
+- **Unbounded `sync.Map` growth:** `OpenAIService.chatLocks` stores a mutex per chat ID and never evicts entries. (`service/openai.go`)
+- **No user feedback on quota exceeded:** When quota is exceeded the error is logged but the Telegram user receives no message.
