@@ -29,8 +29,8 @@ db/
 
 ## Commands
 
-- **Build:** `./build.sh` (compiles to `./leonid`)
-- **Run:** fill env vars in `start.sh`, then `./start.sh`
+- **Build:** `make build` (compiles to `./leonid`)
+- **Run:** fill env vars in `.env`, then `make start`
 - **Test:** `make test` (clears cache, runs with race detector)
 - **Lint/Vet:** `make audit` (tidy, verify, vet, test)
 - **Format:** `make tidy` (go mod tidy + go fmt)
