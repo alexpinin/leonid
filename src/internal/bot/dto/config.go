@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	ID                  int
 	ChatID              int64
 	ChatActivatedAt     time.Time
 	Pass                string

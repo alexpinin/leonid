@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS config
 (
-    chat_id              integer NOT NULL UNIQUE PRIMARY KEY,
+    id                   integer NOT NULL UNIQUE PRIMARY KEY AUTOINCREMENT,
+    chat_id              integer NOT NULL UNIQUE,
     pass                 text    NOT NULL UNIQUE,
     pass_valid_by        integer NOT NULL DEFAULT 0,
     chat_activated_at    integer NOT NULL DEFAULT 0,
@@ -11,7 +12,8 @@ CREATE TABLE IF NOT EXISTS config
 
 CREATE TABLE IF NOT EXISTS quota
 (
-    chat_id         integer NOT NULL UNIQUE PRIMARY KEY,
+    id              integer NOT NULL UNIQUE PRIMARY KEY AUTOINCREMENT,
+    chat_id         integer NOT NULL UNIQUE,
     last_reset_date integer NOT NULL DEFAULT 0,
     remaining       integer NOT NULL DEFAULT 0
 );

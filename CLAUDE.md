@@ -39,8 +39,9 @@ db/
 
 - `DB_FILE` — path to SQLite database
 - `BOT_TOKEN` — Telegram bot token
-- `OPENAI_LLM_TOKEN` — OpenAI API key
-- `DEEPSEEK_LLM_TOKEN` — DeepSeek API key
+- `LLM_PROVIDER` — LLM provider name (`openai` or `deepseek`)
+- `LLM_TOKEN` — LLM API key
+- `LLM_MODEL` — LLM model name
 
 ## Architecture
 
@@ -59,6 +60,18 @@ db/
 - No panics; all errors propagated up the call stack
 
 ## Known Issues
+
+### Bugs
+
+- **Activation flow silently fails:** `ConfigService.Activate()` sets `config.ChatID = chatID` then calls `UpdateConfig`, which does `WHERE chat_id = $1` using the new chat ID. The DB row still has the original chat_id, so the UPDATE matches 0 rows and silently does nothing. The SQL also never updates the `chat_id` column itself. (`service/config.go`, `repo/config.go`)
+- **SendMessage read-modify-write without transaction:** `OpenAIService.SendMessage()` reads config, appends to conversation history, and writes back using bare DB connection, not a transaction. Per-chat mutex helps within one process but doesn't protect against crashes or multiple instances. (`service/openai.go`)
+- **Wrong type name in error wrapping:** `quotaGuard.handle` wraps error as `quotaManager.handle`. (`handler/quota_guard.go:28`)
+
+### Code Quality
+
+- **Unbounded `sync.Map` growth:** `OpenAIService.chatLocks` stores a mutex per chat ID and never evicts entries. (`service/openai.go`)
+- **No user feedback on quota exceeded:** When quota is exceeded the error is logged but the Telegram user receives no message.
+- **Incomplete test stubs:** 3 empty test cases in `service/openai_test.go` (lines 171-181)
 
 ### TODO
 

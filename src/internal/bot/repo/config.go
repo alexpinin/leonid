@@ -21,6 +21,7 @@ func NewConfigRepo() *ConfigRepo {
 func (*ConfigRepo) FindConfigByPass(ex db.Executor, ctx context.Context, pass string) (dto.Config, error) {
 	q := `
 		SELECT
+		    id,
 			chat_id,
 			pass,
 			pass_valid_by,
@@ -42,6 +43,7 @@ func (*ConfigRepo) FindConfigByPass(ex db.Executor, ctx context.Context, pass st
 func (*ConfigRepo) FindConfigByChatID(ex db.Executor, ctx context.Context, chatID int64) (dto.Config, error) {
 	q := `
 		SELECT
+		    id,
 			chat_id,
 			pass,
 			pass_valid_by,
@@ -63,11 +65,12 @@ func (*ConfigRepo) FindConfigByChatID(ex db.Executor, ctx context.Context, chatI
 func (*ConfigRepo) UpdateConfig(ex db.Executor, ctx context.Context, c dto.Config) error {
 	q := `
 		UPDATE config
-		SET chat_activated_at = $2,
-			conversation_context = $3
-		WHERE chat_id = $1
+		SET chat_id = $2,
+		    chat_activated_at = $3,
+			conversation_context = $4
+		WHERE id = $1
 	`
-	_, err := ex.ExecContext(ctx, q, c.ChatID, c.ChatActivatedAt.Unix(), c.ConversationHistory)
+	_, err := ex.ExecContext(ctx, q, c.ID, c.ChatID, c.ChatActivatedAt.Unix(), c.ConversationHistory)
 	if err != nil {
 		return fmt.Errorf("ConfigRepo.UpdateConfig: %w", err)
 	}
@@ -79,6 +82,7 @@ func scanConfig(r *sql.Row) (dto.Config, error) {
 	var passValidByUnix, chatActivatedAtUnix int64
 	var nicknamesStr string
 	err := r.Scan(
+		&config.ID,
 		&config.ChatID,
 		&config.Pass,
 		&passValidByUnix,
