@@ -23,3 +23,9 @@ go.work.sum
 
 # env file
 .env
+
+.git
+.idea
+db/leonid.sqlite3*
+leonid
+leonid.log
