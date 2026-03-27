@@ -4,7 +4,7 @@ Telegram bot powered by LLM. Add the bot to a group chat, activate it with a pas
 
 ## Requirements
 
-- Go 1.25.5+
+- Go 1.26.1
 - SQLite3
 
 ## Set up a Telegram bot

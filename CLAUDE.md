@@ -4,7 +4,7 @@ Telegram bot powered by LLM (OpenAI/DeepSeek). Receives messages from Telegram u
 
 ## Tech Stack
 
-- Go 1.25.5
+- Go 1.26.1
 - SQLite (modernc.org/sqlite)
 - go-telegram/bot for Telegram API
 - openai-go for LLM integration

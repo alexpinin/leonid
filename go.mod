@@ -1,6 +1,6 @@
 module leonid
 
-go 1.25.5
+go 1.26.1
 
 require (
 	github.com/go-telegram/bot v1.18.0
