@@ -49,6 +49,8 @@ db/
 - **Repository pattern** for data access
 - **Dependency injection** via interfaces
 - Conversation history stored as JSON in SQLite, sliding window of last 10 messages
+- **Activation flow:** configs are pre-provisioned with a pass phrase but no chat_id; a Telegram user activates by sending the pass as a message, linking the chat to the config
+- **Concurrency:** `OpenAIService` uses a per-chat mutex instead of a DB transaction to avoid holding SQLite's write lock during LLM calls
 
 ## Code Conventions
 
