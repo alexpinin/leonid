@@ -43,6 +43,8 @@ type LlmClient interface {
 }
 
 func (s *OpenAIService) SendMessage(ctx context.Context, b dto.TelegramBot, chatID int64, message string) error {
+	// Per-chat mutex serializes access instead of a DB transaction
+	// to avoid holding SQLite's write lock during the LLM call.
 	s.chatMutex(chatID).Lock()
 	defer s.chatMutex(chatID).Unlock()
 
