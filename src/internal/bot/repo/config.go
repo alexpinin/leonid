@@ -79,11 +79,12 @@ func (*ConfigRepo) UpdateConfig(ex db.Executor, ctx context.Context, c dto.Confi
 
 func scanConfig(r *sql.Row) (dto.Config, error) {
 	var config dto.Config
+	var chatID *int64
 	var passValidByUnix, chatActivatedAtUnix int64
 	var nicknamesStr string
 	err := r.Scan(
 		&config.ID,
-		&config.ChatID,
+		&chatID,
 		&config.Pass,
 		&passValidByUnix,
 		&chatActivatedAtUnix,
@@ -93,6 +94,9 @@ func scanConfig(r *sql.Row) (dto.Config, error) {
 	)
 	if err != nil {
 		return dto.Config{}, err
+	}
+	if chatID != nil {
+		config.ChatID = *chatID
 	}
 	config.PassValidBy = time.Unix(passValidByUnix, 0)
 	config.ChatActivatedAt = time.Unix(chatActivatedAtUnix, 0)
