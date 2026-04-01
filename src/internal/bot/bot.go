@@ -35,6 +35,7 @@ func Start(database *sql.DB, cfg Config) error {
 
 	configService := service.NewConfigService(executor, configRepo)
 	quotaService := service.NewQuotaService(executor, quotaRepo)
+	audioService := service.NewAudioService()
 
 	llmClient := service.NewOpenAIClient(service.OpenAIConfig{
 		BaseURL: url,
@@ -46,6 +47,7 @@ func Start(database *sql.DB, cfg Config) error {
 	botHandler := handler.NewBotHandler(
 		configService,
 		quotaService,
+		audioService,
 		messageService,
 	)
 

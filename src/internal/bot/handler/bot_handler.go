@@ -29,6 +29,7 @@ type BotHandler struct {
 func NewBotHandler(
 	configService *service.ConfigService,
 	quotaService *service.QuotaService,
+	audioService *service.AudioService,
 	messageService *service.OpenAIService,
 ) *BotHandler {
 	handlers := []updateHandler{
@@ -38,6 +39,7 @@ func NewBotHandler(
 		newAuthGuard(),
 		newCallGuard(configService),
 		newQuotaGuard(quotaService),
+		newAudioReader(true, audioService),
 		newMessageSender(messageService),
 		nil,
 	}
