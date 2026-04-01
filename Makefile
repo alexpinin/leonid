@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 .PHONY: help
 help: # default command position
 	@echo 'Usage:'
@@ -25,13 +27,14 @@ build:
 .PHONY: start
 start: file ?= .env
 start:
+	@test -f ./leonid || make build
 	@set -a && source ${file} && set +a && nohup ./leonid > leonid.log 2>&1 &
 	@echo "Started leonid detached"
 
 ## status: check running status
 .PHONY: status
 status:
-	@ps ax | grep leonid | grep -v grep
+	@ps ax | grep leonid | grep -v grep || echo "No process found"
 
 ## stop: stop running leonid process
 .PHONY: stop
