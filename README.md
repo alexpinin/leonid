@@ -15,12 +15,8 @@ Telegram bot powered by LLM. Add the bot to a group chat, activate it with a pas
 
 ## Init DB
 
-- Create a db file: `touch db/leonid.sqlite3`
-- Create db schema: `sqlite3 db/leonid.sqlite3 < db/init.sql`
-- Insert a config entry:
-```sql
-sqlite3 db/leonid.sqlite3 "INSERT INTO config (pass, nicknames, system_prompt) VALUES ('your-secret-pass', 'botname1,botname2', 'You are a helpful assistant');"
-```
+- Create a db file and schema: `make db/init`
+- Insert a config entry: `make db/insert [file=insert.example.sql]`. File is optional, default is `insert.example.sql`
 
 ## Environment variables
 
