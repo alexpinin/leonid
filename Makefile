@@ -3,6 +3,18 @@ help: # default command position
 	@echo 'Usage:'
 	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' | sed -e 's/^/ /'
 
+## db/init: init database
+.PHONY: db/init
+db/init:
+	@touch db/leonid.sqlite3
+	@sqlite3 db/leonid.sqlite3 < db/init.sql
+
+## db/insert: insert data into the database from a file [file=db/insert.example.sql]
+.PHONY: db/insert
+db/insert: file ?= 'db/insert.example.sql'
+db/insert:
+	@sqlite3 db/leonid.sqlite3 < ${file}
+
 ## build: build project binary
 .PHONY: build
 build:
