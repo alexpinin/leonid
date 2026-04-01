@@ -1,8 +1,11 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/go-telegram/bot"
@@ -15,11 +18,14 @@ func NewAudioService() *AudioService {
 	return &AudioService{}
 }
 
-//FileID = {string} "AwACAgIAAxkBAAOzac2O8wnx6ud0zjCvxnzBhCQfuaUAAkadAAIeQ3FK669RI1w1kHA6BA"
-//FileUniqueID = {string} "AgADRp0AAh5DcUo"
-//Duration = {int} 2
-//MimeType = {string} "audio/ogg"
-//FileSize = {int64} 9859
+type audioReq struct {
+	URL  string `json:"url"`
+	Lang string `json:"lang"`
+}
+
+type audioRes struct {
+	Text string `json:"text"`
+}
 
 func (s *AudioService) TranscribeAudio(ctx context.Context, b *bot.Bot, chatID int64, fileID string) (string, error) {
 	params := &bot.GetFileParams{FileID: fileID}
@@ -30,18 +36,31 @@ func (s *AudioService) TranscribeAudio(ctx context.Context, b *bot.Bot, chatID i
 
 	downloadLink := b.FileDownloadLink(file)
 
-	resp, err := http.Get(downloadLink)
+	req := audioReq{
+		URL:  downloadLink,
+		Lang: "ru",
+	}
+	marshal, err := json.Marshal(req)
+	if err != nil {
+		return "", fmt.Errorf("AudioService.TranscribeAudio: cannot marshal request body: %w", err)
+	}
+
+	resp, err := http.Post("http://localhost:8005/transcribe", "application/json", bytes.NewReader(marshal))
 	if err != nil {
 		return "", fmt.Errorf("AudioService.TranscribeAudio: cannot download audio file: %w", err)
 	}
 	defer resp.Body.Close()
 
-	var bb []byte
-	n, err := resp.Body.Read(bb)
+	bb, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("AudioService.TranscribeAudio: cannot read audio file: %w", err)
 	}
 
-	println(downloadLink)
-	return "", err
+	var res audioRes
+	err = json.Unmarshal(bb, &res)
+	if err != nil {
+		return "", fmt.Errorf("AudioService.TranscribeAudio: cannot unmarshal response body: %w", err)
+	}
+
+	return res.Text, err
 }
