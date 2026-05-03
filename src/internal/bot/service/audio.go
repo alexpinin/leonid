@@ -84,6 +84,10 @@ func (s *AudioService) TranscribeAudio(ctx context.Context, b *bot.Bot, voice *m
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("AudioService.TranscribeAudio: unexpected status code: %d", resp.StatusCode)
+	}
+
 	bb, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("AudioService.TranscribeAudio: cannot read audio file: %w", err)
@@ -99,5 +103,5 @@ func (s *AudioService) TranscribeAudio(ctx context.Context, b *bot.Bot, voice *m
 		return "", errors.New("AudioService.TranscribeAudio: transcribing service failed to process")
 	}
 
-	return res.Text, err
+	return res.Text, nil
 }
