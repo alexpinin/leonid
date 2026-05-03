@@ -17,7 +17,10 @@ import (
 	"leonid/src/internal/db"
 )
 
-const maxMessageHistoryLen = 10
+const (
+	maxMessageHistoryLen = 10
+	llmRequestTimeout    = time.Duration(60) * time.Second
+)
 
 type OpenAIService struct {
 	executor   db.QueryExecutor
@@ -64,7 +67,7 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b dto.TelegramBot, chat
 		Model:    s.client.Model(),
 	}
 
-	reqCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Duration(60)*time.Second)
+	reqCtx, cancel := ContextWithTimeout(ctx, llmRequestTimeout)
 	defer cancel()
 
 	completion, err := s.client.CreateChatCompletion(reqCtx, llmParams)

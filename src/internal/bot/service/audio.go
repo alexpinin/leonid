@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	audioMaxDurationSec = 10
-	audioMimeType       = "audio/ogg"
-	audioLanguage       = "ru"
+	audioMaxDurationSec    = 10
+	audioMimeType          = "audio/ogg"
+	audioLanguage          = "ru"
+	audioProcessingTimeout = time.Duration(10) * time.Second
 )
 
 type AudioService struct {
@@ -68,7 +69,7 @@ func (s *AudioService) TranscribeAudio(ctx context.Context, b *bot.Bot, voice *m
 		return "", fmt.Errorf("AudioService.TranscribeAudio: cannot marshal request body: %w", err)
 	}
 
-	reqCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Duration(10)*time.Second)
+	reqCtx, cancel := ContextWithTimeout(ctx, audioProcessingTimeout)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(reqCtx, http.MethodPost, s.transcribeURL, bytes.NewReader(body))
