@@ -44,6 +44,8 @@ Copy `.env.example` to `.env` and set the values:
 
 ## Audio transcribing
 
+- This is an experimental feature
+- If ON the only way to make bot to read an audio message is to reply to bot's message
 - If enabled, reads the messages and transcribes them to text.
 - If the text contains the bot name, answers the message.
 - An external transcription service is needed.

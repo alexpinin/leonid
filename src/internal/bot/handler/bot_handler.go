@@ -38,9 +38,9 @@ func NewBotHandler(
 		newChatChecker(configService),
 		newChatActivator(configService),
 		newAuthGuard(),
-		newAudioReader(audioEnabled, audioService),
 		newCallGuard(configService),
 		newQuotaGuard(quotaService),
+		newAudioReader(audioEnabled, audioService),
 		newMessageSender(messageService),
 		nil,
 	}

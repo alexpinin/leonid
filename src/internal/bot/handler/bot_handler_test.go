@@ -28,9 +28,9 @@ func TestHandler(t *testing.T) {
 			"*handler.chatChecker",
 			"*handler.chatActivator",
 			"*handler.authGuard",
-			"*handler.audioReader",
 			"*handler.callGuard",
 			"*handler.quotaGuard",
+			"*handler.audioReader",
 			"*handler.messageSender",
 		}
 
