@@ -31,14 +31,14 @@ func NewBotHandler(
 	quotaService *service.QuotaService,
 	audioService *service.AudioService,
 	messageService *service.OpenAIService,
+	audioEnabled bool,
 ) *BotHandler {
 	handlers := []updateHandler{
 		newInputGuard(),
 		newChatChecker(configService),
 		newChatActivator(configService),
 		newAuthGuard(),
-		// TODO audio quota guard
-		newAudioReader(true, audioService),
+		newAudioReader(audioEnabled, audioService),
 		newCallGuard(configService),
 		newQuotaGuard(quotaService),
 		newMessageSender(messageService),

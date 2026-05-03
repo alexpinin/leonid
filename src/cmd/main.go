@@ -32,6 +32,7 @@ func main() {
 		LLMProvider:   mustLoad("LLM_PROVIDER"),
 		LLMToken:      mustLoad("LLM_TOKEN"),
 		LLMModel:      mustLoad("LLM_MODEL"),
+		AudioEnabled:  mustLoad("AUDIO_ENABLED") == "true",
 		TranscribeURL: mustLoad("TRANSCRIBE_URL"),
 	}
 

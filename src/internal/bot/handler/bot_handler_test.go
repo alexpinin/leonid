@@ -20,6 +20,7 @@ func TestHandler(t *testing.T) {
 			&service.QuotaService{},
 			&service.AudioService{},
 			&service.OpenAIService{},
+			false,
 		)
 
 		expected := []string{

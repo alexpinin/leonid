@@ -20,6 +20,7 @@ type Config struct {
 	LLMProvider   string
 	LLMToken      string
 	LLMModel      string
+	AudioEnabled  bool
 	TranscribeURL string
 }
 
@@ -50,6 +51,7 @@ func Start(database *sql.DB, cfg Config) error {
 		quotaService,
 		audioService,
 		messageService,
+		cfg.AudioEnabled,
 	)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
