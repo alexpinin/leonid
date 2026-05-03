@@ -42,6 +42,29 @@ Copy `.env.example` to `.env` and set the values:
 
 - Run `make stop`
 
+## Audio transcribing
+
+- If enabled, reads the messages and transcribes them to text.
+- If the text contains the bot name, answers the message.
+- An external transcription service is needed.
+- The service should support the following API:
+
+Request:
+```
+POST
+{
+  "url": https://audio,
+  "lang": "en"
+}
+```
+Response:
+```
+{
+  "text": "here is my message"
+}
+```
+
+
 ## TODO
 
 - **Unbounded `sync.Map` growth:** `OpenAIService.chatLocks` stores a mutex per chat ID and never evicts entries. (`service/openai.go`)
