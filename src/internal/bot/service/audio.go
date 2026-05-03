@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -58,18 +60,26 @@ func (s *AudioService) TranscribeAudio(ctx context.Context, b *bot.Bot, voice *m
 
 	downloadLink := b.FileDownloadLink(file)
 
-	req := audioReq{
+	body, err := json.Marshal(audioReq{
 		URL:  downloadLink,
 		Lang: audioLanguage,
-	}
-	marshal, err := json.Marshal(req)
+	})
 	if err != nil {
 		return "", fmt.Errorf("AudioService.TranscribeAudio: cannot marshal request body: %w", err)
 	}
 
-	resp, err := http.Post(s.transcribeURL, "application/json", bytes.NewReader(marshal))
+	reqCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Duration(10)*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(reqCtx, http.MethodPost, s.transcribeURL, bytes.NewReader(body))
 	if err != nil {
-		return "", fmt.Errorf("AudioService.TranscribeAudio: cannot download audio file: %w", err)
+		return "", fmt.Errorf("AudioService.TranscribeAudio: cannot create a context: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("AudioService.TranscribeAudio: transcribing service error: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -82,6 +92,10 @@ func (s *AudioService) TranscribeAudio(ctx context.Context, b *bot.Bot, voice *m
 	err = json.Unmarshal(bb, &res)
 	if err != nil {
 		return "", fmt.Errorf("AudioService.TranscribeAudio: cannot unmarshal response body: %w", err)
+	}
+
+	if res.Text == "" {
+		return "", errors.New("AudioService.TranscribeAudio: transcribing service failed to process")
 	}
 
 	return res.Text, err

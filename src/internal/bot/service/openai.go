@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/go-telegram/bot"
 	"github.com/openai/openai-go"
@@ -62,7 +63,11 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b dto.TelegramBot, chat
 		Messages: s.buildPrompt(config, history),
 		Model:    s.client.Model(),
 	}
-	completion, err := s.client.CreateChatCompletion(ctx, llmParams)
+
+	reqCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Duration(60)*time.Second)
+	defer cancel()
+
+	completion, err := s.client.CreateChatCompletion(reqCtx, llmParams)
 	if err != nil {
 		return fmt.Errorf("OpenAIService.SendMessage: cannot get LLM response: %w", err)
 	}
