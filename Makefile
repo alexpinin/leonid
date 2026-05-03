@@ -20,15 +20,6 @@ db/insert: file ?= 'db/insert.example.sql'
 db/insert:
 	@sqlite3 db/leonid.sqlite3 < ${file}
 
-## docker/up: docker compose up (if needed)
-.PHONY: docker/up
-docker/up:
-	@docker compose -f compose.dev.yaml up --detach
-
-## docker/down: docker compose up (if needed)
-.PHONY: docker/down
-docker/down:
-	@docker compose -f compose.dev.yaml down
 
 # =================================================================================================
 # Application

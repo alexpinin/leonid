@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 )
 
 type audioReader struct {
@@ -24,12 +25,12 @@ func newAudioReader(
 }
 
 type audioTranscriptor interface {
-	TranscribeAudio(ctx context.Context, b *bot.Bot, chatID int64, fileID string) (string, error)
+	TranscribeAudio(ctx context.Context, b *bot.Bot, voice *models.Voice) (string, error)
 }
 
 func (h *audioReader) handle(c context.Context, b *bot.Bot, u *UpdateContext) error {
 	if h.enabled && u.Message.Voice != nil {
-		message, err := h.transcriptor.TranscribeAudio(c, b, u.Message.Chat.ID, u.Message.Voice.FileID)
+		message, err := h.transcriptor.TranscribeAudio(c, b, u.Message.Voice)
 		if err != nil {
 			return fmt.Errorf("audioReader.handle: %w", err)
 		}

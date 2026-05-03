@@ -18,6 +18,7 @@ func TestHandler(t *testing.T) {
 		sut := NewBotHandler(
 			&service.ConfigService{},
 			&service.QuotaService{},
+			&service.AudioService{},
 			&service.OpenAIService{},
 		)
 
@@ -26,6 +27,7 @@ func TestHandler(t *testing.T) {
 			"*handler.chatChecker",
 			"*handler.chatActivator",
 			"*handler.authGuard",
+			"*handler.audioReader",
 			"*handler.callGuard",
 			"*handler.quotaGuard",
 			"*handler.messageSender",

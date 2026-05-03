@@ -4,6 +4,7 @@ go 1.26.1
 
 require (
 	github.com/go-telegram/bot v1.18.0
+	github.com/joho/godotenv v1.5.1
 	github.com/openai/openai-go v1.12.0
 	modernc.org/sqlite v1.45.0
 )
