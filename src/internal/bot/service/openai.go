@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/go-telegram/bot"
 	"github.com/openai/openai-go"
@@ -16,7 +17,10 @@ import (
 	"leonid/src/internal/db"
 )
 
-const maxMessageHistoryLen = 10
+const (
+	maxMessageHistoryLen = 10
+	llmRequestTimeout    = time.Duration(60) * time.Second
+)
 
 type OpenAIService struct {
 	executor   db.QueryExecutor
@@ -62,7 +66,11 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b dto.TelegramBot, chat
 		Messages: s.buildPrompt(config, history),
 		Model:    s.client.Model(),
 	}
-	completion, err := s.client.CreateChatCompletion(ctx, llmParams)
+
+	reqCtx, cancel := ContextWithTimeout(ctx, llmRequestTimeout)
+	defer cancel()
+
+	completion, err := s.client.CreateChatCompletion(reqCtx, llmParams)
 	if err != nil {
 		return fmt.Errorf("OpenAIService.SendMessage: cannot get LLM response: %w", err)
 	}

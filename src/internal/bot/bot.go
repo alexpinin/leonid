@@ -16,10 +16,12 @@ import (
 )
 
 type Config struct {
-	BotToken    string
-	LLMProvider string
-	LLMToken    string
-	LLMModel    string
+	BotToken      string
+	LLMProvider   string
+	LLMToken      string
+	LLMModel      string
+	AudioEnabled  bool
+	TranscribeURL string
 }
 
 func Start(database *sql.DB, cfg Config) error {
@@ -35,6 +37,7 @@ func Start(database *sql.DB, cfg Config) error {
 
 	configService := service.NewConfigService(executor, configRepo)
 	quotaService := service.NewQuotaService(executor, quotaRepo)
+	audioService := service.NewAudioService(cfg.TranscribeURL)
 
 	llmClient := service.NewOpenAIClient(service.OpenAIConfig{
 		BaseURL: url,
@@ -46,7 +49,9 @@ func Start(database *sql.DB, cfg Config) error {
 	botHandler := handler.NewBotHandler(
 		configService,
 		quotaService,
+		audioService,
 		messageService,
+		cfg.AudioEnabled,
 	)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)

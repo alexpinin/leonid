@@ -18,7 +18,9 @@ func TestHandler(t *testing.T) {
 		sut := NewBotHandler(
 			&service.ConfigService{},
 			&service.QuotaService{},
+			&service.AudioService{},
 			&service.OpenAIService{},
+			false,
 		)
 
 		expected := []string{
@@ -28,6 +30,7 @@ func TestHandler(t *testing.T) {
 			"*handler.authGuard",
 			"*handler.callGuard",
 			"*handler.quotaGuard",
+			"*handler.audioReader",
 			"*handler.messageSender",
 		}
 

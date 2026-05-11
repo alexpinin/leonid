@@ -19,7 +19,7 @@ src/internal/
     dto/config.go      — data transfer objects
     handler/           — chain of responsibility handlers
     repo/config.go     — database access (repository pattern)
-    service/           — business logic (config, openai, quota)
+    service/           — business logic (config, openai, quota, audio)
   db/                  — database connection & query executor
   logger/              — structured logging (slog)
   testutil/            — test assertion helpers
@@ -42,15 +42,18 @@ db/
 - `LLM_PROVIDER` — LLM provider name (`openai` or `deepseek`)
 - `LLM_TOKEN` — LLM API key
 - `LLM_MODEL` — LLM model name
+- `AUDIO_ENABLED` — `true` to enable voice message transcription
+- `TRANSCRIBE_URL` — HTTP endpoint of the transcription service
 
 ## Architecture
 
-- **Chain of Responsibility** handler pattern: InputGuard → ChatChecker → ChatActivator → AuthGuard → CallGuard → QuotaGuard → MessageSender
+- **Chain of Responsibility** handler pattern: InputGuard → ChatChecker → ChatActivator → AuthGuard → CallGuard → QuotaGuard → AudioReader → MessageSender
 - **Repository pattern** for data access
 - **Dependency injection** via interfaces
 - Conversation history stored as JSON in SQLite, sliding window of last 10 messages
 - **Activation flow:** configs are pre-provisioned with a pass phrase but no chat_id; a Telegram user activates by sending the pass as a message, linking the chat to the config
 - **Concurrency:** `OpenAIService` uses a per-chat mutex instead of a DB transaction to avoid holding SQLite's write lock during LLM calls
+- **Audio:** voice messages are transcribed via an external HTTP service (`TRANSCRIBE_URL`) and the transcript replaces `Message.Text` for downstream handlers; transcription runs after CallGuard/QuotaGuard so unaddressed or over-quota messages don't hit the service
 
 ## Code Conventions
 
