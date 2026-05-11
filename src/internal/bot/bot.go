@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 
+	"leonid/src/internal/bot/client"
 	"leonid/src/internal/bot/handler"
 	"leonid/src/internal/bot/repo"
 	"leonid/src/internal/bot/service"
@@ -39,7 +40,7 @@ func Start(database *sql.DB, cfg Config) error {
 	quotaService := service.NewQuotaService(executor, quotaRepo)
 	audioService := service.NewAudioService(cfg.TranscribeURL)
 
-	llmClient := service.NewOpenAIClient(service.OpenAIConfig{
+	llmClient := client.NewOpenAIClient(client.OpenAIConfig{
 		BaseURL: url,
 		Token:   cfg.LLMToken,
 		Model:   cfg.LLMModel,
