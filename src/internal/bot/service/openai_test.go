@@ -43,7 +43,7 @@ func TestOpenAIService(t *testing.T) {
 				ConversationHistory: "{}",
 			},
 		}
-		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
+		sut := NewOpenAIService(&mockQueryExecutor{}, cr, lc)
 
 		answer, err := sut.InquireLLM(ctx, chatID, userMessage)
 
@@ -90,7 +90,7 @@ func TestOpenAIService(t *testing.T) {
 				ConversationHistory: string(testutil.MustMarshalJson(t, history)),
 			},
 		}
-		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
+		sut := NewOpenAIService(&mockQueryExecutor{}, cr, lc)
 
 		_, err := sut.InquireLLM(ctx, chatID, userMessage)
 
@@ -117,7 +117,7 @@ func TestOpenAIService(t *testing.T) {
 
 	t.Run("should return error if FindConfigByChatID returns error", func(t *testing.T) {
 		cr := &mockConfigRepo{findConfigByChatIDErr: testutil.TestError}
-		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
+		sut := NewOpenAIService(&mockQueryExecutor{}, cr, lc)
 
 		_, err := sut.InquireLLM(ctx, chatID, userMessage)
 
@@ -126,7 +126,7 @@ func TestOpenAIService(t *testing.T) {
 
 	t.Run("should return error if Unmarshal returns error", func(t *testing.T) {
 		cr := &mockConfigRepo{findConfigByChatIDRes: dto.Config{}}
-		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
+		sut := NewOpenAIService(&mockQueryExecutor{}, cr, lc)
 
 		_, err := sut.InquireLLM(ctx, chatID, userMessage)
 
@@ -135,7 +135,7 @@ func TestOpenAIService(t *testing.T) {
 
 	t.Run("should return error if CreateChatCompletion returns error", func(t *testing.T) {
 		lc := &mockLLMClient{createChatCompletionErr: testutil.TestError}
-		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
+		sut := NewOpenAIService(&mockQueryExecutor{}, cr, lc)
 
 		_, err := sut.InquireLLM(ctx, chatID, userMessage)
 
@@ -144,7 +144,7 @@ func TestOpenAIService(t *testing.T) {
 
 	t.Run("should return error if CreateChatCompletion returns no result", func(t *testing.T) {
 		lc := &mockLLMClient{createChatCompletionRes: &openai.ChatCompletion{}}
-		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
+		sut := NewOpenAIService(&mockQueryExecutor{}, cr, lc)
 
 		_, err := sut.InquireLLM(ctx, chatID, userMessage)
 
@@ -157,7 +157,7 @@ func TestOpenAIService(t *testing.T) {
 			findConfigByChatIDRes: dto.Config{ConversationHistory: "{}"},
 			updateConfigErr:       testutil.TestError,
 		}
-		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
+		sut := NewOpenAIService(&mockQueryExecutor{}, cr, lc)
 
 		_, err := sut.InquireLLM(ctx, chatID, userMessage)
 
@@ -168,11 +168,11 @@ func TestOpenAIService(t *testing.T) {
 type mockQueryExecutor struct {
 }
 
-func (mockQueryExecutor) ExecuteInTx(func(tx *sql.Tx) error) error {
-	return nil
+func (t *mockQueryExecutor) ExecuteInTx(_ context.Context, f func(tx *sql.Tx) error) error {
+	return f(nil)
 }
 
-func (mockQueryExecutor) Executor() db.Executor {
+func (t *mockQueryExecutor) Executor() db.Executor {
 	return nil
 }
 

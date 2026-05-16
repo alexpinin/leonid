@@ -7,7 +7,7 @@ import (
 )
 
 type QueryExecutor interface {
-	ExecuteInTx(f func(tx *sql.Tx) error) error
+	ExecuteInTx(context.Context, func(tx *sql.Tx) error) error
 	Executor() Executor
 }
 
@@ -25,8 +25,8 @@ func NewAppQueryExecutor(db *sql.DB) *AppQueryExecutor {
 	return &AppQueryExecutor{db: db}
 }
 
-func (t *AppQueryExecutor) ExecuteInTx(f func(tx *sql.Tx) error) error {
-	tx, err := t.db.Begin()
+func (t *AppQueryExecutor) ExecuteInTx(ctx context.Context, f func(tx *sql.Tx) error) error {
+	tx, err := t.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -43,15 +43,4 @@ func (t *AppQueryExecutor) ExecuteInTx(f func(tx *sql.Tx) error) error {
 
 func (t *AppQueryExecutor) Executor() Executor {
 	return t.db
-}
-
-type MockQueryExecutor struct {
-}
-
-func (t *MockQueryExecutor) ExecuteInTx(f func(tx *sql.Tx) error) error {
-	return f(nil)
-}
-
-func (t *MockQueryExecutor) Executor() Executor {
-	return nil
 }
