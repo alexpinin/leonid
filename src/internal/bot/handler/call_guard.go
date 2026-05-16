@@ -41,11 +41,8 @@ func (h *callGuard) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) er
 		return nil
 	}
 
-	replyToNickname := strings.ToLower(u.Message.ReplyToMessage.From.FirstName)
-	for _, nickname := range nicknames {
-		if nickname == replyToNickname {
-			return h.nextHandle(ctx, b, u)
-		}
+	if u.Message.ReplyToMessage.From.ID == b.ID() {
+		return h.nextHandle(ctx, b, u)
 	}
 
 	return nil

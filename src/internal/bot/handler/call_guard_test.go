@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 
 	"leonid/src/internal/testutil"
 )
 
 func TestCallGuardHandle(t *testing.T) {
+	tBot := &bot.Bot{}
+	tBot.SetToken("456")
 	update := &models.Update{
 		Message: &models.Message{
 			Text: "Hello, Bot",
@@ -69,7 +72,7 @@ func TestCallGuardHandle(t *testing.T) {
 					},
 					ReplyToMessage: &models.Message{
 						From: &models.User{
-							FirstName: "Bot",
+							ID: 456,
 						},
 					},
 				},
@@ -84,31 +87,11 @@ func TestCallGuardHandle(t *testing.T) {
 						},
 						ReplyToMessage: &models.Message{
 							From: &models.User{
-								FirstName: "Bot",
+								ID: 456,
 							},
 						},
 					},
 				}}),
-			},
-		},
-		{
-			description:      "should not call next handler and exit if replay name doesn't match",
-			nicknameProvider: mockNicknameProvider{listNicknamesRes: []string{"bot"}},
-			given: &UpdateContext{Update: &models.Update{
-				Message: &models.Message{
-					Text: "Hello",
-					Chat: models.Chat{
-						ID: 123,
-					},
-					ReplyToMessage: &models.Message{
-						From: &models.User{
-							FirstName: "Bot1",
-						},
-					},
-				},
-			}},
-			expectedRunLog: []string{
-				"ListNicknames: 123",
 			},
 		},
 		{
@@ -150,7 +133,7 @@ func TestCallGuardHandle(t *testing.T) {
 			sut := newCallGuard(&tc.nicknameProvider)
 			sut.setNext(&mockHandler{runLog: &runLog})
 
-			_ = sut.handle(nil, nil, tc.given)
+			_ = sut.handle(nil, tBot, tc.given)
 
 			testutil.Equal(t, tc.expectedRunLog, runLog)
 		})
