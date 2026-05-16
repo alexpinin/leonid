@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-telegram/bot/models"
 
-	"leonid/src/internal/bot/dto"
 	"leonid/src/internal/testutil"
 )
 
@@ -52,7 +51,7 @@ type mockMessageSender struct {
 	runLog *[]string
 }
 
-func (m *mockMessageSender) InquireLLM(_ context.Context, _ dto.TelegramBot, chatID int64, message string) (string, error) {
+func (m *mockMessageSender) InquireLLM(_ context.Context, chatID int64, message string) (string, error) {
 	*m.runLog = append(*m.runLog, fmt.Sprintf("SendMessage: %d, %s", chatID, message))
 	return "", nil
 }
