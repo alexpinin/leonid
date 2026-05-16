@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-telegram/bot"
-	"github.com/go-telegram/bot/models"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
 
@@ -17,7 +15,6 @@ import (
 )
 
 func TestOpenAIService(t *testing.T) {
-	b := &mockBot{}
 	cr := &mockConfigRepo{
 		findConfigByChatIDRes: dto.Config{
 			ConversationHistory: "{}",
@@ -40,7 +37,7 @@ func TestOpenAIService(t *testing.T) {
 	chatID := int64(123)
 	userMessage := "user message"
 
-	t.Run("should send message and save conversation history", func(t *testing.T) {
+	t.Run("should send message to LLM and save conversation history", func(t *testing.T) {
 		cr := &mockConfigRepo{
 			findConfigByChatIDRes: dto.Config{
 				ConversationHistory: "{}",
@@ -48,10 +45,10 @@ func TestOpenAIService(t *testing.T) {
 		}
 		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
 
-		err := sut.SendMessage(ctx, b, chatID, userMessage)
+		answer, err := sut.InquireLLM(ctx, chatID, userMessage)
 
 		testutil.Equal(t, nil, err)
-		testutil.Equal(t, llmMessage, b.sendMessageIn1.Text)
+		testutil.Equal(t, llmMessage, answer)
 
 		history := dto.OpenAIConversationHistory{
 			Messages: []dto.OpenAIConversationMessage{
@@ -95,7 +92,7 @@ func TestOpenAIService(t *testing.T) {
 		}
 		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
 
-		err := sut.SendMessage(ctx, b, chatID, userMessage)
+		_, err := sut.InquireLLM(ctx, chatID, userMessage)
 
 		testutil.Equal(t, nil, err)
 
@@ -122,7 +119,7 @@ func TestOpenAIService(t *testing.T) {
 		cr := &mockConfigRepo{findConfigByChatIDErr: testutil.TestError}
 		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
 
-		err := sut.SendMessage(ctx, b, chatID, userMessage)
+		_, err := sut.InquireLLM(ctx, chatID, userMessage)
 
 		testutil.ErrorIs(t, testutil.TestError, err)
 	})
@@ -131,7 +128,7 @@ func TestOpenAIService(t *testing.T) {
 		cr := &mockConfigRepo{findConfigByChatIDRes: dto.Config{}}
 		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
 
-		err := sut.SendMessage(ctx, b, chatID, userMessage)
+		_, err := sut.InquireLLM(ctx, chatID, userMessage)
 
 		testutil.ErrorContains(t, "unexpected end of JSON input", err)
 	})
@@ -140,9 +137,19 @@ func TestOpenAIService(t *testing.T) {
 		lc := &mockLLMClient{createChatCompletionErr: testutil.TestError}
 		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
 
-		err := sut.SendMessage(ctx, b, chatID, userMessage)
+		_, err := sut.InquireLLM(ctx, chatID, userMessage)
 
 		testutil.ErrorIs(t, testutil.TestError, err)
+	})
+
+	t.Run("should return error if CreateChatCompletion returns no result", func(t *testing.T) {
+		lc := &mockLLMClient{createChatCompletionRes: &openai.ChatCompletion{}}
+		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
+
+		_, err := sut.InquireLLM(ctx, chatID, userMessage)
+
+		testutil.NotEqual(t, nil, err)
+		testutil.HasSuffix(t, "no ai choices", err.Error())
 	})
 
 	t.Run("should return error if UpdateConfig returns error", func(t *testing.T) {
@@ -152,18 +159,7 @@ func TestOpenAIService(t *testing.T) {
 		}
 		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
 
-		err := sut.SendMessage(ctx, b, chatID, userMessage)
-
-		testutil.ErrorIs(t, testutil.TestError, err)
-	})
-
-	t.Run("should return error if SendMessage returns error", func(t *testing.T) {
-		b := &mockBot{
-			sendMessageErr: testutil.TestError,
-		}
-		sut := NewOpenAIService(mockQueryExecutor{}, cr, lc)
-
-		err := sut.SendMessage(ctx, b, chatID, userMessage)
+		_, err := sut.InquireLLM(ctx, chatID, userMessage)
 
 		testutil.ErrorIs(t, testutil.TestError, err)
 	})
@@ -213,15 +209,4 @@ func (c *mockLLMClient) CreateChatCompletion(context.Context, openai.ChatComplet
 
 func (c *mockLLMClient) Model() string {
 	return c.modelRes
-}
-
-type mockBot struct {
-	sendMessageIn1 *bot.SendMessageParams
-	sendMessageRes *models.Message
-	sendMessageErr error
-}
-
-func (b *mockBot) SendMessage(_ context.Context, in1 *bot.SendMessageParams) (*models.Message, error) {
-	b.sendMessageIn1 = in1
-	return b.sendMessageRes, b.sendMessageErr
 }

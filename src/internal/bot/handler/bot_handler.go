@@ -14,6 +14,7 @@ type UpdateContext struct {
 	*models.Update
 	IsChatActive bool
 	IsPassActive bool
+	LLMReply     string
 }
 
 type updateHandler interface {
@@ -41,7 +42,8 @@ func NewBotHandler(
 		newCallGuard(configService),
 		newQuotaGuard(quotaService),
 		newAudioReader(audioEnabled, audioService),
-		newMessageSender(messageService),
+		newLLMInquirer(messageService),
+		newReplySender(),
 		nil,
 	}
 

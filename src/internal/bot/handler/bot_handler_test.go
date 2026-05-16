@@ -31,7 +31,8 @@ func TestHandler(t *testing.T) {
 			"*handler.callGuard",
 			"*handler.quotaGuard",
 			"*handler.audioReader",
-			"*handler.messageSender",
+			"*handler.llmInquirer",
+			"*handler.replySender",
 		}
 
 		i := 0

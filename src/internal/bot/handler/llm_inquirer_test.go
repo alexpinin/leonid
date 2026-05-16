@@ -7,11 +7,10 @@ import (
 
 	"github.com/go-telegram/bot/models"
 
-	"leonid/src/internal/bot/dto"
 	"leonid/src/internal/testutil"
 )
 
-func TestMessageSenderHandle(t *testing.T) {
+func TestLLMInquirerHandle(t *testing.T) {
 	update := &models.Update{
 		Message: &models.Message{
 			Text: "message",
@@ -38,7 +37,7 @@ func TestMessageSenderHandle(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			runLog := make([]string, 0)
 			tc.messageSender.runLog = &runLog
-			sut := newMessageSender(&tc.messageSender)
+			sut := newLLMInquirer(&tc.messageSender)
 			sut.setNext(&mockHandler{runLog: &runLog})
 
 			_ = sut.handle(nil, nil, tc.given)
@@ -52,7 +51,7 @@ type mockMessageSender struct {
 	runLog *[]string
 }
 
-func (m *mockMessageSender) SendMessage(_ context.Context, _ dto.TelegramBot, chatID int64, message string) error {
+func (m *mockMessageSender) InquireLLM(_ context.Context, chatID int64, message string) (string, error) {
 	*m.runLog = append(*m.runLog, fmt.Sprintf("SendMessage: %d, %s", chatID, message))
-	return nil
+	return "", nil
 }

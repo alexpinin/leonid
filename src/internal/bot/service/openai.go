@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-telegram/bot"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
 
@@ -25,14 +24,14 @@ const (
 type OpenAIService struct {
 	executor   db.QueryExecutor
 	configRepo ConfigRepo
-	client     LlmClient
+	client     llmClient
 	chatLocks  sync.Map
 }
 
 func NewOpenAIService(
 	qe db.QueryExecutor,
 	cr ConfigRepo,
-	lc LlmClient,
+	lc llmClient,
 ) *OpenAIService {
 	return &OpenAIService{
 		executor:   qe,
@@ -41,12 +40,12 @@ func NewOpenAIService(
 	}
 }
 
-type LlmClient interface {
+type llmClient interface {
 	CreateChatCompletion(ctx context.Context, req openai.ChatCompletionNewParams) (*openai.ChatCompletion, error)
 	Model() string
 }
 
-func (s *OpenAIService) SendMessage(ctx context.Context, b dto.TelegramBot, chatID int64, message string) error {
+func (s *OpenAIService) InquireLLM(ctx context.Context, chatID int64, message string) (string, error) {
 	// Per-chat mutex serializes access instead of a DB transaction
 	// to avoid holding SQLite's write lock during the LLM call.
 	s.chatMutex(chatID).Lock()
@@ -54,12 +53,12 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b dto.TelegramBot, chat
 
 	config, err := s.configRepo.FindConfigByChatID(s.executor.Executor(), ctx, chatID)
 	if err != nil {
-		return fmt.Errorf("OpenAIService.SendMessage: cannot find config: %w", err)
+		return "", fmt.Errorf("OpenAIService.InquireLLM: cannot find config: %w", err)
 	}
 
 	history, err := s.conversationHistory(config, message)
 	if err != nil {
-		return fmt.Errorf("OpenAIService.SendMessage: cannot build openai context: %w", err)
+		return "", fmt.Errorf("OpenAIService.InquireLLM: cannot build LLM context: %w", err)
 	}
 
 	llmParams := openai.ChatCompletionNewParams{
@@ -72,32 +71,28 @@ func (s *OpenAIService) SendMessage(ctx context.Context, b dto.TelegramBot, chat
 
 	completion, err := s.client.CreateChatCompletion(reqCtx, llmParams)
 	if err != nil {
-		return fmt.Errorf("OpenAIService.SendMessage: cannot get LLM response: %w", err)
+		return "", fmt.Errorf("OpenAIService.InquireLLM: cannot get LLM response: %w", err)
 	}
 	if len(completion.Choices) == 0 {
-		return errors.New("OpenAIService.SendMessage: no ai choices")
+		return "", errors.New("OpenAIService.InquireLLM: no ai choices")
 	}
 
-	response := completion.Choices[0].Message.Content
-	config.ConversationHistory, err = s.historyToPersist(history, response)
+	reply := completion.Choices[0].Message.Content
+	if reply == "" {
+		return "", errors.New("OpenAIService.InquireLLM: empty reply from LLM")
+	}
+
+	config.ConversationHistory, err = s.historyToPersist(history, reply)
 	if err != nil {
-		return fmt.Errorf("OpenAIService.SendMessage: cannot convert history to persist: %w", err)
+		return "", fmt.Errorf("OpenAIService.InquireLLM: cannot convert history to persist: %w", err)
 	}
 
 	err = s.configRepo.UpdateConfig(s.executor.Executor(), ctx, config)
 	if err != nil {
-		return fmt.Errorf("OpenAIService.SendMessage: cannot update config: %w", err)
+		return "", fmt.Errorf("OpenAIService.InquireLLM: cannot update config: %w", err)
 	}
 
-	telegramParams := bot.SendMessageParams{
-		ChatID: chatID,
-		Text:   response,
-	}
-	_, err = b.SendMessage(ctx, &telegramParams)
-	if err != nil {
-		return fmt.Errorf("OpenAIService.SendMessage: cannot send Telegram message: %w", err)
-	}
-	return nil
+	return reply, nil
 }
 
 func (_ *OpenAIService) conversationHistory(config dto.Config, message string) (dto.OpenAIConversationHistory, error) {
