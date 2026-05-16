@@ -33,7 +33,7 @@ type ConfigRepo interface {
 }
 
 func (s *ConfigService) Activate(ctx context.Context, pass string, chatID int64) (bool, error) {
-	err := s.executor.ExecuteInTx(func(tx *sql.Tx) error {
+	err := s.executor.ExecuteInTx(ctx, func(tx *sql.Tx) error {
 		config, err := s.configRepo.FindConfigByPass(tx, ctx, pass)
 		if err != nil {
 			return fmt.Errorf("cannot find config: %w", err)

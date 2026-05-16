@@ -69,7 +69,7 @@ func (s *AudioService) TranscribeAudio(ctx context.Context, b *bot.Bot, voice *m
 		return "", fmt.Errorf("AudioService.TranscribeAudio: cannot marshal request body: %w", err)
 	}
 
-	reqCtx, cancel := ContextWithTimeout(ctx, audioProcessingTimeout)
+	reqCtx, cancel := context.WithTimeout(ctx, audioProcessingTimeout)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(reqCtx, http.MethodPost, s.transcribeURL, bytes.NewReader(body))

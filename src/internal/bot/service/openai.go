@@ -66,7 +66,7 @@ func (s *OpenAIService) InquireLLM(ctx context.Context, chatID int64, message st
 		Model:    s.client.Model(),
 	}
 
-	reqCtx, cancel := ContextWithTimeout(ctx, llmRequestTimeout)
+	reqCtx, cancel := context.WithTimeout(ctx, llmRequestTimeout)
 	defer cancel()
 
 	completion, err := s.client.CreateChatCompletion(reqCtx, llmParams)

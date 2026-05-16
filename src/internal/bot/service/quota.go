@@ -34,7 +34,7 @@ func NewQuotaService(
 const maxQuotaPerDay = 100
 
 func (s *QuotaService) UseChatQuota(c context.Context, chatID int64) error {
-	err := s.executor.ExecuteInTx(func(tx *sql.Tx) error {
+	err := s.executor.ExecuteInTx(c, func(tx *sql.Tx) error {
 		quota, err := s.quotaRepo.FindQuotaByChatID(tx, c, chatID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("failed to find quota: %w", err)
