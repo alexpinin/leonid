@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"leonid/src/internal/bot/dto"
 	"leonid/src/internal/db"
@@ -30,6 +31,8 @@ func (*QuotaRepo) FindQuotaByChatID(ex db.Executor, ctx context.Context, chatID 
 	if err != nil {
 		return dto.Quota{}, fmt.Errorf("QuotaRepo.FindQuotaByChatID: %w", err)
 	}
+	quota.ChatID = chatID
+	quota.LastResetDate = time.Unix(lastResetDateUnix, 0)
 
 	return quota, nil
 }
