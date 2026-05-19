@@ -19,8 +19,8 @@ func TestChatCheckerHandle(t *testing.T) {
 		description        string
 		storage            mockChatCheckerStorage
 		givenUpdate        *models.Update
-		givenContext       *UpdateContext
-		expectedContext    *UpdateContext
+		givenState         *UpdateState
+		expectedState      *UpdateState
 		expectedErr        error
 		expectedNextCalled int
 	}{
@@ -28,8 +28,8 @@ func TestChatCheckerHandle(t *testing.T) {
 			description:        "should call chChecker and next handler",
 			storage:            mockChatCheckerStorage{isChatActiveRes: true},
 			givenUpdate:        update,
-			givenContext:       &UpdateContext{},
-			expectedContext:    &UpdateContext{IsChatActive: true},
+			givenState:         &UpdateState{},
+			expectedState:      &UpdateState{IsChatActive: true},
 			expectedErr:        nil,
 			expectedNextCalled: 1,
 		},
@@ -37,8 +37,8 @@ func TestChatCheckerHandle(t *testing.T) {
 			description:        "should call chChecker and exit if it returns error",
 			storage:            mockChatCheckerStorage{isChatActiveErr: testutil.TestError},
 			givenUpdate:        update,
-			givenContext:       &UpdateContext{},
-			expectedContext:    &UpdateContext{},
+			givenState:         &UpdateState{},
+			expectedState:      &UpdateState{},
 			expectedErr:        testutil.TestError,
 			expectedNextCalled: 0,
 		},
@@ -49,7 +49,7 @@ func TestChatCheckerHandle(t *testing.T) {
 			sut := newChatChecker(&tc.storage)
 			sut.setNext(&next)
 
-			err := sut.handle(nil, nil, tc.givenUpdate, tc.givenContext)
+			err := sut.handle(nil, nil, tc.givenUpdate, tc.givenState)
 
 			testutil.ErrorIs(t, tc.expectedErr, err)
 			testutil.Equal(t, tc.expectedNextCalled, next.handleCount)

@@ -12,12 +12,12 @@ func TestBasicHandlerNextHandle(t *testing.T) {
 		sut := &basicHandler{}
 		sut.setNext(next)
 
-		_ = sut.nextHandle(nil, nil, nil, &UpdateContext{})
+		_ = sut.nextHandle(nil, nil, nil, &UpdateState{})
 
 		testutil.Equal(t, 1, next.handleCount)
 	})
 	t.Run("should not call next and fail if it's nil", func(t *testing.T) {
 		sut := &basicHandler{}
-		_ = sut.nextHandle(nil, nil, nil, &UpdateContext{})
+		_ = sut.nextHandle(nil, nil, nil, &UpdateState{})
 	})
 }

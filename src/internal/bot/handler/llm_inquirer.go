@@ -23,11 +23,11 @@ type inquirer interface {
 	InquireLLM(ctx context.Context, chatID int64, message string) (string, error)
 }
 
-func (h *llmInquirer) handle(ctx context.Context, b *bot.Bot, u *models.Update, uc *UpdateContext) error {
+func (h *llmInquirer) handle(ctx context.Context, b *bot.Bot, u *models.Update, s *UpdateState) error {
 	reply, err := h.InquireLLM(ctx, u.Message.Chat.ID, u.Message.Text)
 	if err != nil {
 		return fmt.Errorf("llmInquirer.handle: %w", err)
 	}
-	uc.LLMReply = reply
-	return h.nextHandle(ctx, b, u, uc)
+	s.LLMReply = reply
+	return h.nextHandle(ctx, b, u, s)
 }

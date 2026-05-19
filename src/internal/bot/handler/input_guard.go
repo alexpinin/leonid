@@ -15,9 +15,9 @@ func newInputGuard() *inputGuard {
 	return &inputGuard{}
 }
 
-func (h *inputGuard) handle(c context.Context, b *bot.Bot, u *models.Update, uc *UpdateContext) error {
+func (h *inputGuard) handle(c context.Context, b *bot.Bot, u *models.Update, s *UpdateState) error {
 	if u == nil || u.Message == nil || u.Message.Chat.ID == 0 {
 		return nil
 	}
-	return h.nextHandle(c, b, u, uc)
+	return h.nextHandle(c, b, u, s)
 }

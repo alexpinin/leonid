@@ -23,11 +23,11 @@ type quotaManager interface {
 	UseChatQuota(c context.Context, chatID int64) error
 }
 
-func (h *quotaGuard) handle(c context.Context, b *bot.Bot, u *models.Update, uc *UpdateContext) error {
+func (h *quotaGuard) handle(c context.Context, b *bot.Bot, u *models.Update, s *UpdateState) error {
 	err := h.UseChatQuota(c, u.Message.Chat.ID)
 	if err != nil {
 		return fmt.Errorf("quotaGuard.handle: %w", err)
 	}
 
-	return h.nextHandle(c, b, u, uc)
+	return h.nextHandle(c, b, u, s)
 }

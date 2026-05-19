@@ -9,22 +9,22 @@ import (
 func TestAuthGuardHandle(t *testing.T) {
 	testCases := []struct {
 		description        string
-		given              *UpdateContext
+		givenState         *UpdateState
 		expectedNextCalled int
 	}{
 		{
 			description:        "should call next handler if chat is active",
-			given:              &UpdateContext{IsChatActive: true},
+			givenState:         &UpdateState{IsChatActive: true},
 			expectedNextCalled: 1,
 		},
 		{
 			description:        "should call next handler if pass phrase is active",
-			given:              &UpdateContext{IsPassActive: true},
+			givenState:         &UpdateState{IsPassActive: true},
 			expectedNextCalled: 1,
 		},
 		{
 			description:        "should exit and not call next handler if neither chat nor pass is active",
-			given:              &UpdateContext{},
+			givenState:         &UpdateState{},
 			expectedNextCalled: 0,
 		},
 	}
@@ -34,7 +34,7 @@ func TestAuthGuardHandle(t *testing.T) {
 			sut := newAuthGuard()
 			sut.setNext(next)
 
-			_ = sut.handle(nil, nil, nil, tc.given)
+			_ = sut.handle(nil, nil, nil, tc.givenState)
 
 			testutil.Equal(t, tc.expectedNextCalled, next.handleCount)
 		})

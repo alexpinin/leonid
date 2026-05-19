@@ -11,7 +11,7 @@ type mockHandler struct {
 	handleCount int
 }
 
-func (m *mockHandler) handle(context.Context, *bot.Bot, *models.Update, *UpdateContext) error {
+func (m *mockHandler) handle(context.Context, *bot.Bot, *models.Update, *UpdateState) error {
 	m.handleCount++
 	return nil
 }

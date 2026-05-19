@@ -22,8 +22,8 @@ func TestChatActivatorHandle(t *testing.T) {
 		description            string
 		chatActivator          mockChatActivator
 		givenUpdate            *models.Update
-		givenContext           *UpdateContext
-		expectedContext        *UpdateContext
+		givenState             *UpdateState
+		expectedContext        *UpdateState
 		expectedErr            error
 		expectedActivateCalled int
 		expectedNextCalled     int
@@ -32,8 +32,8 @@ func TestChatActivatorHandle(t *testing.T) {
 			description:            "should do nothing and call next handler if chat is active",
 			chatActivator:          mockChatActivator{},
 			givenUpdate:            update,
-			givenContext:           &UpdateContext{IsChatActive: true},
-			expectedContext:        &UpdateContext{IsChatActive: true},
+			givenState:             &UpdateState{IsChatActive: true},
+			expectedContext:        &UpdateState{IsChatActive: true},
 			expectedErr:            nil,
 			expectedActivateCalled: 0,
 			expectedNextCalled:     1,
@@ -42,8 +42,8 @@ func TestChatActivatorHandle(t *testing.T) {
 			description:            "should call chActivator and next handler",
 			chatActivator:          mockChatActivator{activateRes: true},
 			givenUpdate:            update,
-			givenContext:           &UpdateContext{},
-			expectedContext:        &UpdateContext{IsPassActive: true},
+			givenState:             &UpdateState{},
+			expectedContext:        &UpdateState{IsPassActive: true},
 			expectedErr:            nil,
 			expectedActivateCalled: 1,
 			expectedNextCalled:     1,
@@ -52,8 +52,8 @@ func TestChatActivatorHandle(t *testing.T) {
 			description:            "should call chActivator and exit if it returns error",
 			chatActivator:          mockChatActivator{activateErr: testutil.TestError},
 			givenUpdate:            update,
-			givenContext:           &UpdateContext{},
-			expectedContext:        &UpdateContext{},
+			givenState:             &UpdateState{},
+			expectedContext:        &UpdateState{},
 			expectedErr:            testutil.TestError,
 			expectedActivateCalled: 1,
 			expectedNextCalled:     0,
@@ -65,10 +65,10 @@ func TestChatActivatorHandle(t *testing.T) {
 			sut := newChatActivator(&tc.chatActivator)
 			sut.setNext(next)
 
-			err := sut.handle(nil, nil, tc.givenUpdate, tc.givenContext)
+			err := sut.handle(nil, nil, tc.givenUpdate, tc.givenState)
 
 			testutil.ErrorIs(t, tc.expectedErr, err)
-			testutil.Equal(t, tc.expectedContext, tc.givenContext)
+			testutil.Equal(t, tc.expectedContext, tc.givenState)
 			testutil.Equal(t, tc.expectedActivateCalled, tc.chatActivator.activateCalled)
 			testutil.Equal(t, tc.expectedNextCalled, next.handleCount)
 		})

@@ -16,15 +16,15 @@ func newReplySender() *replySender {
 	return &replySender{}
 }
 
-func (h *replySender) handle(ctx context.Context, b *bot.Bot, u *models.Update, uc *UpdateContext) error {
+func (h *replySender) handle(ctx context.Context, b *bot.Bot, u *models.Update, s *UpdateState) error {
 	telegramParams := bot.SendMessageParams{
 		ChatID: u.Message.Chat.ID,
-		Text:   uc.LLMReply,
+		Text:   s.LLMReply,
 	}
 	_, err := b.SendMessage(ctx, &telegramParams)
 	if err != nil {
 		return fmt.Errorf("replySender.handle: %w", err)
 	}
 
-	return h.nextHandle(ctx, b, u, uc)
+	return h.nextHandle(ctx, b, u, s)
 }

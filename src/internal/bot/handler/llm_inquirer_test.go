@@ -20,8 +20,8 @@ func TestLLMInquirerHandle(t *testing.T) {
 		description        string
 		messageSender      mockMessageSender
 		givenUpdate        *models.Update
-		givenContext       *UpdateContext
-		expectedContext    *UpdateContext
+		givenState         *UpdateState
+		expectedState      *UpdateState
 		expectedErr        error
 		expectedNextCalled int
 	}{
@@ -29,8 +29,8 @@ func TestLLMInquirerHandle(t *testing.T) {
 			description:        "should call inquirer and next handler",
 			messageSender:      mockMessageSender{inquireLLMRes: "hello"},
 			givenUpdate:        update,
-			givenContext:       &UpdateContext{},
-			expectedContext:    &UpdateContext{LLMReply: "hello"},
+			givenState:         &UpdateState{},
+			expectedState:      &UpdateState{LLMReply: "hello"},
 			expectedErr:        nil,
 			expectedNextCalled: 1,
 		},
@@ -38,8 +38,8 @@ func TestLLMInquirerHandle(t *testing.T) {
 			description:        "should call inquirer and exit if it returns error",
 			messageSender:      mockMessageSender{inquireLLMErr: testutil.TestError},
 			givenUpdate:        update,
-			givenContext:       &UpdateContext{},
-			expectedContext:    &UpdateContext{},
+			givenState:         &UpdateState{},
+			expectedState:      &UpdateState{},
 			expectedErr:        testutil.TestError,
 			expectedNextCalled: 0,
 		},
@@ -50,10 +50,10 @@ func TestLLMInquirerHandle(t *testing.T) {
 			sut := newLLMInquirer(&tc.messageSender)
 			sut.setNext(next)
 
-			err := sut.handle(nil, nil, tc.givenUpdate, tc.givenContext)
+			err := sut.handle(nil, nil, tc.givenUpdate, tc.givenState)
 
 			testutil.ErrorIs(t, tc.expectedErr, err)
-			testutil.Equal(t, tc.expectedContext, tc.givenContext)
+			testutil.Equal(t, tc.expectedState, tc.givenState)
 			testutil.Equal(t, tc.expectedNextCalled, next.handleCount)
 		})
 	}

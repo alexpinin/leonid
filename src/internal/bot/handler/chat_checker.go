@@ -23,12 +23,12 @@ type chChecker interface {
 	IsChatActive(ctx context.Context, chatID int64) (bool, error)
 }
 
-func (h *chatChecker) handle(ctx context.Context, b *bot.Bot, u *models.Update, uc *UpdateContext) error {
+func (h *chatChecker) handle(ctx context.Context, b *bot.Bot, u *models.Update, s *UpdateState) error {
 	isChatActive, err := h.IsChatActive(ctx, u.Message.Chat.ID)
 	if err != nil {
 		return fmt.Errorf("chatChecker.handle: %w", err)
 	}
-	uc.IsChatActive = isChatActive
+	s.IsChatActive = isChatActive
 
-	return h.nextHandle(ctx, b, u, uc)
+	return h.nextHandle(ctx, b, u, s)
 }
