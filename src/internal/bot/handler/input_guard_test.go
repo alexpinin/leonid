@@ -10,54 +10,50 @@ import (
 
 func TestInputGuardHandle(t *testing.T) {
 	testCases := []struct {
-		description    string
-		given          *UpdateContext
-		expectedRunLog []string
+		description        string
+		givenUpdate        *models.Update
+		expectedErr        error
+		expectedNextCalled int
 	}{
 		{
 			description: "should call next handler if update is valid",
-			given: &UpdateContext{
-				Update: &models.Update{
-					Message: &models.Message{
-						Chat: models.Chat{ID: 123},
-					},
+			givenUpdate: &models.Update{
+				Message: &models.Message{
+					Chat: models.Chat{ID: 123},
 				},
 			},
-			expectedRunLog: []string{
-				"handle: " + testUpdateToStr(&UpdateContext{
-					Update: &models.Update{
-						Message: &models.Message{
-							Chat: models.Chat{ID: 123},
-						},
-					},
-				}),
-			},
+			expectedErr:        nil,
+			expectedNextCalled: 1,
 		},
 		{
-			description:    "should not call next handler and exit if update is nil",
-			given:          nil,
-			expectedRunLog: []string{},
+			description:        "should not call next handler and exit if update is nil",
+			givenUpdate:        nil,
+			expectedErr:        nil,
+			expectedNextCalled: 0,
 		},
 		{
-			description:    "should not call next handler and exit if update message is nil",
-			given:          &UpdateContext{Update: &models.Update{}},
-			expectedRunLog: []string{},
+			description:        "should not call next handler and exit if update message is nil",
+			givenUpdate:        &models.Update{},
+			expectedErr:        nil,
+			expectedNextCalled: 0,
 		},
 		{
-			description:    "should not call next handler and exit if chat ID is invalid",
-			given:          &UpdateContext{Update: &models.Update{Message: &models.Message{}}},
-			expectedRunLog: []string{},
+			description:        "should not call next handler and exit if chat ID is invalid",
+			givenUpdate:        &models.Update{Message: &models.Message{}},
+			expectedErr:        nil,
+			expectedNextCalled: 0,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
-			runLog := make([]string, 0)
+			next := &mockHandler{}
 			sut := &inputGuard{}
-			sut.setNext(&mockHandler{runLog: &runLog})
+			sut.setNext(next)
 
-			_ = sut.handle(nil, nil, tc.given)
+			err := sut.handle(nil, nil, tc.givenUpdate, nil)
 
-			testutil.Equal(t, tc.expectedRunLog, runLog)
+			testutil.Equal(t, tc.expectedErr, err)
+			testutil.Equal(t, tc.expectedNextCalled, next.handleCount)
 		})
 	}
 }

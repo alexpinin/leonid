@@ -2,18 +2,17 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
 	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 )
 
 type mockHandler struct {
-	runLog *[]string
+	handleCount int
 }
 
-func (m *mockHandler) handle(_ context.Context, _ *bot.Bot, uc *UpdateContext) error {
-	*m.runLog = append(*m.runLog, fmt.Sprintf("handle: %s", testUpdateToStr(uc)))
+func (m *mockHandler) handle(context.Context, *bot.Bot, *models.Update, *UpdateState) error {
+	m.handleCount++
 	return nil
 }
 
@@ -22,9 +21,4 @@ func (m *mockHandler) setNext(updateHandler) {
 
 func (m *mockHandler) getNext() updateHandler {
 	return nil
-}
-
-func testUpdateToStr(uc *UpdateContext) string {
-	s, _ := json.Marshal(uc)
-	return string(s)
 }

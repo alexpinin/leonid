@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/go-telegram/bot/models"
@@ -18,40 +17,53 @@ func TestLLMInquirerHandle(t *testing.T) {
 		},
 	}
 	testCases := []struct {
-		description    string
-		messageSender  mockMessageSender
-		given          *UpdateContext
-		expectedRunLog []string
+		description        string
+		messageSender      mockMessageSender
+		givenUpdate        *models.Update
+		givenState         *UpdateState
+		expectedState      *UpdateState
+		expectedErr        error
+		expectedNextCalled int
 	}{
 		{
-			description:   "should send message and call next handler",
-			messageSender: mockMessageSender{},
-			given:         &UpdateContext{Update: update},
-			expectedRunLog: []string{
-				"SendMessage: 123, message",
-				"handle: " + testUpdateToStr(&UpdateContext{Update: update}),
-			},
+			description:        "should call inquirer and next handler",
+			messageSender:      mockMessageSender{inquireLLMRes: "hello"},
+			givenUpdate:        update,
+			givenState:         &UpdateState{},
+			expectedState:      &UpdateState{LLMReply: "hello"},
+			expectedErr:        nil,
+			expectedNextCalled: 1,
+		},
+		{
+			description:        "should call inquirer and exit if it returns error",
+			messageSender:      mockMessageSender{inquireLLMErr: testutil.TestError},
+			givenUpdate:        update,
+			givenState:         &UpdateState{},
+			expectedState:      &UpdateState{},
+			expectedErr:        testutil.TestError,
+			expectedNextCalled: 0,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
-			runLog := make([]string, 0)
-			tc.messageSender.runLog = &runLog
+			next := &mockHandler{}
 			sut := newLLMInquirer(&tc.messageSender)
-			sut.setNext(&mockHandler{runLog: &runLog})
+			sut.setNext(next)
 
-			_ = sut.handle(nil, nil, tc.given)
+			err := sut.handle(nil, nil, tc.givenUpdate, tc.givenState)
 
-			testutil.Equal(t, tc.expectedRunLog, runLog)
+			testutil.ErrorIs(t, tc.expectedErr, err)
+			testutil.Equal(t, tc.expectedState, tc.givenState)
+			testutil.Equal(t, tc.expectedNextCalled, next.handleCount)
 		})
 	}
 }
 
 type mockMessageSender struct {
-	runLog *[]string
+	inquireLLMRes string
+	inquireLLMErr error
 }
 
-func (m *mockMessageSender) InquireLLM(_ context.Context, chatID int64, message string) (string, error) {
-	*m.runLog = append(*m.runLog, fmt.Sprintf("SendMessage: %d, %s", chatID, message))
-	return "", nil
+func (m *mockMessageSender) InquireLLM(context.Context, int64, string) (string, error) {
+	return m.inquireLLMRes, m.inquireLLMErr
 }

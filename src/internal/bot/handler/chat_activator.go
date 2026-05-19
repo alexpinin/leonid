@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 )
 
 type chatActivator struct {
@@ -22,16 +23,16 @@ type chActivator interface {
 	Activate(context.Context, string, int64) (bool, error)
 }
 
-func (h *chatActivator) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) error {
-	if u.IsChatActive {
-		return h.nextHandle(ctx, b, u)
+func (h *chatActivator) handle(ctx context.Context, b *bot.Bot, u *models.Update, s *UpdateState) error {
+	if s.IsChatActive {
+		return h.nextHandle(ctx, b, u, s)
 	}
 
 	isPassActive, err := h.Activate(ctx, u.Message.Text, u.Message.Chat.ID)
 	if err != nil {
 		return fmt.Errorf("chatActivator.handle: %w", err)
 	}
-	u.IsPassActive = isPassActive
+	s.IsPassActive = isPassActive
 
-	return h.nextHandle(ctx, b, u)
+	return h.nextHandle(ctx, b, u, s)
 }

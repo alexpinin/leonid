@@ -10,15 +10,14 @@ import (
 	"leonid/src/internal/logger"
 )
 
-type UpdateContext struct {
-	*models.Update
+type UpdateState struct {
 	IsChatActive bool
 	IsPassActive bool
 	LLMReply     string
 }
 
 type updateHandler interface {
-	handle(context.Context, *bot.Bot, *UpdateContext) error
+	handle(context.Context, *bot.Bot, *models.Update, *UpdateState) error
 	setNext(updateHandler)
 	getNext() updateHandler
 }
@@ -56,9 +55,9 @@ func NewBotHandler(
 	}
 }
 
-func (h *BotHandler) Handle(ctx context.Context, b *bot.Bot, update *models.Update) {
-	uc := UpdateContext{Update: update}
-	err := h.handlerHead.handle(ctx, b, &uc)
+func (h *BotHandler) Handle(ctx context.Context, b *bot.Bot, u *models.Update) {
+	s := &UpdateState{}
+	err := h.handlerHead.handle(ctx, b, u, s)
 	if err != nil {
 		logger.Error(err.Error())
 	}

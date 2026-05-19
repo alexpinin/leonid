@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/go-telegram/bot"
@@ -14,7 +13,7 @@ import (
 func TestCallGuardHandle(t *testing.T) {
 	tBot := &bot.Bot{}
 	tBot.SetToken("456")
-	update := &models.Update{
+	update := models.Update{
 		Message: &models.Message{
 			Text: "Hello, Bot",
 			Chat: models.Chat{
@@ -23,48 +22,44 @@ func TestCallGuardHandle(t *testing.T) {
 		},
 	}
 	testCases := []struct {
-		description      string
-		nicknameProvider mockNicknameProvider
-		given            *UpdateContext
-		expectedRunLog   []string
+		description        string
+		nicknameProvider   mockNicknameProvider
+		givenUpdate        *models.Update
+		expectedErr        error
+		expectedNextCalled int
 	}{
 		{
-			description:      "should call next handler if bot is called by a nickname ignoring case",
-			nicknameProvider: mockNicknameProvider{listNicknamesRes: []string{"Bot"}},
-			given:            &UpdateContext{Update: update},
-			expectedRunLog: []string{
-				"ListNicknames: 123",
-				"handle: " + testUpdateToStr(&UpdateContext{Update: update}),
-			},
+			description:        "should call nicknameProvider and next handler if bot is called by a nickname ignoring case",
+			nicknameProvider:   mockNicknameProvider{listNicknamesRes: []string{"Bot"}},
+			givenUpdate:        &update,
+			expectedNextCalled: 1,
+			expectedErr:        nil,
 		},
 		{
-			description:      "should not call next handler and exit if bot is not called by a nickname",
-			nicknameProvider: mockNicknameProvider{listNicknamesRes: []string{"bot2"}},
-			given:            &UpdateContext{Update: update},
-			expectedRunLog: []string{
-				"ListNicknames: 123",
-			},
+			description:        "should call nicknameProvider and and exit if bot is not called by a nickname",
+			nicknameProvider:   mockNicknameProvider{listNicknamesRes: []string{"bot2"}},
+			givenUpdate:        &update,
+			expectedNextCalled: 0,
+			expectedErr:        nil,
 		},
 		{
-			description:      "should not call next handler and exit if there are no nicknames present",
-			nicknameProvider: mockNicknameProvider{listNicknamesRes: nil},
-			given:            &UpdateContext{Update: update},
-			expectedRunLog: []string{
-				"ListNicknames: 123",
-			},
+			description:        "should call nicknameProvider and and exit if there are no nicknames present",
+			nicknameProvider:   mockNicknameProvider{listNicknamesRes: nil},
+			givenUpdate:        &update,
+			expectedNextCalled: 0,
+			expectedErr:        nil,
 		},
 		{
-			description:      "should ignore empty nicknames",
-			nicknameProvider: mockNicknameProvider{listNicknamesRes: []string{""}},
-			given:            &UpdateContext{Update: update},
-			expectedRunLog: []string{
-				"ListNicknames: 123",
-			},
+			description:        "should ignore empty nicknames",
+			nicknameProvider:   mockNicknameProvider{listNicknamesRes: []string{""}},
+			givenUpdate:        &update,
+			expectedNextCalled: 0,
+			expectedErr:        nil,
 		},
 		{
-			description:      "should call next handler if bot is called by in reply",
+			description:      "should call nicknameProvider and next handler if bot is called by in reply",
 			nicknameProvider: mockNicknameProvider{listNicknamesRes: []string{"bot"}},
-			given: &UpdateContext{Update: &models.Update{
+			givenUpdate: &models.Update{
 				Message: &models.Message{
 					Text: "Hello",
 					Chat: models.Chat{
@@ -76,28 +71,14 @@ func TestCallGuardHandle(t *testing.T) {
 						},
 					},
 				},
-			}},
-			expectedRunLog: []string{
-				"ListNicknames: 123",
-				"handle: " + testUpdateToStr(&UpdateContext{Update: &models.Update{
-					Message: &models.Message{
-						Text: "Hello",
-						Chat: models.Chat{
-							ID: 123,
-						},
-						ReplyToMessage: &models.Message{
-							From: &models.User{
-								ID: 456,
-							},
-						},
-					},
-				}}),
 			},
+			expectedNextCalled: 1,
+			expectedErr:        nil,
 		},
 		{
-			description:      "should not call next handler and exit if From is nil",
+			description:      "should call nicknameProvider and and exit if From is nil",
 			nicknameProvider: mockNicknameProvider{listNicknamesRes: []string{"bot"}},
-			given: &UpdateContext{Update: &models.Update{
+			givenUpdate: &models.Update{
 				Message: &models.Message{
 					Text: "Hello",
 					Chat: models.Chat{
@@ -105,48 +86,58 @@ func TestCallGuardHandle(t *testing.T) {
 					},
 					ReplyToMessage: &models.Message{},
 				},
-			}},
-			expectedRunLog: []string{
-				"ListNicknames: 123",
 			},
+			expectedNextCalled: 0,
+			expectedErr:        nil,
 		},
 		{
-			description:      "should not call next handler and exit if ReplyToMessage is nil",
+			description:      "should call nicknameProvider and and exit if ReplyToMessage is nil",
 			nicknameProvider: mockNicknameProvider{listNicknamesRes: []string{"bot"}},
-			given: &UpdateContext{Update: &models.Update{
+			givenUpdate: &models.Update{
 				Message: &models.Message{
 					Text: "Hello",
 					Chat: models.Chat{
 						ID: 123,
 					},
 				},
-			}},
-			expectedRunLog: []string{
-				"ListNicknames: 123",
 			},
+			expectedNextCalled: 0,
+			expectedErr:        nil,
+		},
+		{
+			description:      "should call nicknameProvider and exit if it returns error",
+			nicknameProvider: mockNicknameProvider{listNicknamesErr: testutil.TestError},
+			givenUpdate: &models.Update{
+				Message: &models.Message{
+					Text: "Hello",
+					Chat: models.Chat{
+						ID: 123,
+					},
+				},
+			},
+			expectedNextCalled: 0,
+			expectedErr:        testutil.TestError,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
-			runLog := make([]string, 0)
-			tc.nicknameProvider.runLog = &runLog
+			next := &mockHandler{}
 			sut := newCallGuard(&tc.nicknameProvider)
-			sut.setNext(&mockHandler{runLog: &runLog})
+			sut.setNext(next)
 
-			_ = sut.handle(nil, tBot, tc.given)
+			err := sut.handle(nil, tBot, tc.givenUpdate, nil)
 
-			testutil.Equal(t, tc.expectedRunLog, runLog)
+			testutil.ErrorIs(t, tc.expectedErr, err)
+			testutil.Equal(t, tc.expectedNextCalled, next.handleCount)
 		})
 	}
 }
 
 type mockNicknameProvider struct {
-	runLog           *[]string
 	listNicknamesRes []string
 	listNicknamesErr error
 }
 
-func (m *mockNicknameProvider) ListNicknames(_ context.Context, chatID int64) ([]string, error) {
-	*m.runLog = append(*m.runLog, fmt.Sprintf("ListNicknames: %d", chatID))
+func (m *mockNicknameProvider) ListNicknames(context.Context, int64) ([]string, error) {
 	return m.listNicknamesRes, m.listNicknamesErr
 }

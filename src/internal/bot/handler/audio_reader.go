@@ -28,7 +28,7 @@ type audioTranscriptor interface {
 	TranscribeAudio(ctx context.Context, b *bot.Bot, voice *models.Voice) (string, error)
 }
 
-func (h *audioReader) handle(c context.Context, b *bot.Bot, u *UpdateContext) error {
+func (h *audioReader) handle(c context.Context, b *bot.Bot, u *models.Update, s *UpdateState) error {
 	if h.enabled && u.Message.Voice != nil {
 		message, err := h.transcriptor.TranscribeAudio(c, b, u.Message.Voice)
 		if err != nil {
@@ -36,5 +36,5 @@ func (h *audioReader) handle(c context.Context, b *bot.Bot, u *UpdateContext) er
 		}
 		u.Message.Text = message
 	}
-	return h.nextHandle(c, b, u)
+	return h.nextHandle(c, b, u, s)
 }
