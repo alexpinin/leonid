@@ -77,6 +77,6 @@ type mockAudioTranscriptor struct {
 	transcribeAudioErr error
 }
 
-func (t *mockAudioTranscriptor) TranscribeAudio(ctx context.Context, b *bot.Bot, voice *models.Voice) (string, error) {
+func (t *mockAudioTranscriptor) TranscribeAudio(context.Context, *bot.Bot, *models.Voice) (string, error) {
 	return t.transcribeAudioRes, t.transcribeAudioErr
 }
