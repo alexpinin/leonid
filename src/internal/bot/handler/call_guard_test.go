@@ -134,11 +134,10 @@ func TestCallGuardHandle(t *testing.T) {
 }
 
 type mockNicknameProvider struct {
-	runLog           *[]string
 	listNicknamesRes []string
 	listNicknamesErr error
 }
 
-func (m *mockNicknameProvider) ListNicknames(_ context.Context, chatID int64) ([]string, error) {
+func (m *mockNicknameProvider) ListNicknames(context.Context, int64) ([]string, error) {
 	return m.listNicknamesRes, m.listNicknamesErr
 }
