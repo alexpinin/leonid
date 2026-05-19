@@ -11,14 +11,13 @@ import (
 )
 
 type UpdateContext struct {
-	*models.Update
 	IsChatActive bool
 	IsPassActive bool
 	LLMReply     string
 }
 
 type updateHandler interface {
-	handle(context.Context, *bot.Bot, *UpdateContext) error
+	handle(context.Context, *bot.Bot, *models.Update, *UpdateContext) error
 	setNext(updateHandler)
 	getNext() updateHandler
 }
@@ -56,9 +55,9 @@ func NewBotHandler(
 	}
 }
 
-func (h *BotHandler) Handle(ctx context.Context, b *bot.Bot, update *models.Update) {
-	uc := UpdateContext{Update: update}
-	err := h.handlerHead.handle(ctx, b, &uc)
+func (h *BotHandler) Handle(ctx context.Context, b *bot.Bot, u *models.Update) {
+	uc := UpdateContext{}
+	err := h.handlerHead.handle(ctx, b, u, &uc)
 	if err != nil {
 		logger.Error(err.Error())
 	}

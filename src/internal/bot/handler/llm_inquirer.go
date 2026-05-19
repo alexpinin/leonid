@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 )
 
 type llmInquirer struct {
@@ -22,11 +23,11 @@ type inquirer interface {
 	InquireLLM(ctx context.Context, chatID int64, message string) (string, error)
 }
 
-func (h *llmInquirer) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) error {
+func (h *llmInquirer) handle(ctx context.Context, b *bot.Bot, u *models.Update, uc *UpdateContext) error {
 	reply, err := h.InquireLLM(ctx, u.Message.Chat.ID, u.Message.Text)
 	if err != nil {
 		return fmt.Errorf("llmInquirer.handle: %w", err)
 	}
-	u.LLMReply = reply
-	return h.nextHandle(ctx, b, u)
+	uc.LLMReply = reply
+	return h.nextHandle(ctx, b, u, uc)
 }

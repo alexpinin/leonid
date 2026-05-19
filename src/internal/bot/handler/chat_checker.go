@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 )
 
 type chatChecker struct {
@@ -22,12 +23,12 @@ type chChecker interface {
 	IsChatActive(ctx context.Context, chatID int64) (bool, error)
 }
 
-func (h *chatChecker) handle(ctx context.Context, b *bot.Bot, u *UpdateContext) error {
+func (h *chatChecker) handle(ctx context.Context, b *bot.Bot, u *models.Update, uc *UpdateContext) error {
 	isChatActive, err := h.IsChatActive(ctx, u.Message.Chat.ID)
 	if err != nil {
 		return fmt.Errorf("chatChecker.handle: %w", err)
 	}
-	u.IsChatActive = isChatActive
+	uc.IsChatActive = isChatActive
 
-	return h.nextHandle(ctx, b, u)
+	return h.nextHandle(ctx, b, u, uc)
 }

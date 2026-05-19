@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 )
 
 type quotaGuard struct {
@@ -22,11 +23,11 @@ type quotaManager interface {
 	UseChatQuota(c context.Context, chatID int64) error
 }
 
-func (h *quotaGuard) handle(c context.Context, b *bot.Bot, u *UpdateContext) error {
+func (h *quotaGuard) handle(c context.Context, b *bot.Bot, u *models.Update, uc *UpdateContext) error {
 	err := h.UseChatQuota(c, u.Message.Chat.ID)
 	if err != nil {
 		return fmt.Errorf("quotaGuard.handle: %w", err)
 	}
 
-	return h.nextHandle(c, b, u)
+	return h.nextHandle(c, b, u, uc)
 }

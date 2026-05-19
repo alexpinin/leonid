@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/go-telegram/bot/models"
@@ -20,50 +19,69 @@ func TestChatActivatorHandle(t *testing.T) {
 		},
 	}
 	testCases := []struct {
-		description    string
-		chatActivator  mockChatActivator
-		given          *UpdateContext
-		expectedRunLog []string
+		description            string
+		chatActivator          mockChatActivator
+		givenUpdate            *models.Update
+		givenContext           *UpdateContext
+		expectedContext        *UpdateContext
+		expectedErr            error
+		expectedActivateCalled int
+		expectedNextCalled     int
 	}{
 		{
-			description:   "it should do nothing and call next handler if chat is already active",
-			chatActivator: mockChatActivator{},
-			given:         &UpdateContext{Update: update, IsChatActive: true},
-			expectedRunLog: []string{
-				"handle: " + testUpdateToStr(&UpdateContext{Update: update, IsChatActive: true}),
-			},
+			description:            "should do nothing and call next handler if chat is active",
+			chatActivator:          mockChatActivator{},
+			givenUpdate:            update,
+			givenContext:           &UpdateContext{IsChatActive: true},
+			expectedContext:        &UpdateContext{IsChatActive: true},
+			expectedErr:            nil,
+			expectedActivateCalled: 0,
+			expectedNextCalled:     1,
 		},
 		{
-			description:   "it should set IsPassActive from Activate function result and call next handler",
-			chatActivator: mockChatActivator{activateRes: true},
-			given:         &UpdateContext{Update: update},
-			expectedRunLog: []string{
-				"Activate: pass, 123",
-				"handle: " + testUpdateToStr(&UpdateContext{Update: update, IsPassActive: true}),
-			},
+			description:            "should call chActivator and next handler",
+			chatActivator:          mockChatActivator{activateRes: true},
+			givenUpdate:            update,
+			givenContext:           &UpdateContext{},
+			expectedContext:        &UpdateContext{IsPassActive: true},
+			expectedErr:            nil,
+			expectedActivateCalled: 1,
+			expectedNextCalled:     1,
+		},
+		{
+			description:            "should call chActivator and exit if it returns error",
+			chatActivator:          mockChatActivator{activateErr: testutil.TestError},
+			givenUpdate:            update,
+			givenContext:           &UpdateContext{},
+			expectedContext:        &UpdateContext{},
+			expectedErr:            testutil.TestError,
+			expectedActivateCalled: 1,
+			expectedNextCalled:     0,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
-			runLog := make([]string, 0)
-			tc.chatActivator.runLog = &runLog
-			moc := newChatActivator(&tc.chatActivator)
-			moc.setNext(&mockHandler{runLog: &runLog})
+			next := &mockHandler{}
+			sut := newChatActivator(&tc.chatActivator)
+			sut.setNext(next)
 
-			_ = moc.handle(nil, nil, tc.given)
+			err := sut.handle(nil, nil, tc.givenUpdate, tc.givenContext)
 
-			testutil.Equal(t, tc.expectedRunLog, runLog)
+			testutil.ErrorIs(t, tc.expectedErr, err)
+			testutil.Equal(t, tc.expectedContext, tc.givenContext)
+			testutil.Equal(t, tc.expectedActivateCalled, tc.chatActivator.activateCalled)
+			testutil.Equal(t, tc.expectedNextCalled, next.handleCount)
 		})
 	}
 }
 
 type mockChatActivator struct {
-	runLog      *[]string
-	activateRes bool
-	activateErr error
+	activateCalled int
+	activateRes    bool
+	activateErr    error
 }
 
-func (m *mockChatActivator) Activate(_ context.Context, pass string, chatID int64) (bool, error) {
-	*m.runLog = append(*m.runLog, fmt.Sprintf("Activate: %s, %d", pass, chatID))
+func (m *mockChatActivator) Activate(context.Context, string, int64) (bool, error) {
+	m.activateCalled++
 	return m.activateRes, m.activateErr
 }
